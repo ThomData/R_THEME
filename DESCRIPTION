@@ -1,0 +1,26 @@
+Package: THEME
+Type: Package
+Title: THEmatic Model Exploration
+Version: 0.1.0
+Author: Xavier Bry [aut], 
+        Thomas Verron [cre]
+Maintainer: Thomas Verron <thomas.verron@free.fr>
+Description: THEmatic Model Exploration is a both exploratory and predictive multiblock-multiequation-technique
+License: GPL (>=2)
+Imports: 
+    tidyr,
+    shiny,
+    ggplot2,
+    stringr,
+    gridExtra,
+    ggrepel,
+    dplyr,
+    DT,
+    shinyFiles
+Depends: R (>= 3.4.0), shiny, tidyr, ggplot2, stringr, gridExtra, ggrepel, dplyr,DT, shinyFiles
+Suggests: R.rsp
+VignetteBuilder: R.rsp
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+
