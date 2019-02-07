@@ -31,10 +31,10 @@
 ##########################
 ## save THEME results function
 ## functionsaveTHEME
-.sav.THEME<-function(resfunTHEME2017,resfunTHEMEcoeff=NULL,resfunTHEMEpred=NULL,OutputDir=NULL,sousdos=NULL){
+.sav.THEME<-function(resfunTHEMEint,resfunTHEMEcoeff=NULL,resfunTHEMEpred=NULL,OutputDir=NULL,sousdos=NULL){
 
    if(!is.null(OutputDir)){
-        resE<-resfunTHEME2017$resE
+        resE<-resfunTHEMEint$resE
         nbcomp<-resE$nbcomp
         if(!is.null(resE$rcov)){nbcomp[resE$rcov]<-"cov"}
         vers<-paste(nbcomp,collapse="_")
@@ -44,8 +44,8 @@
         dir.create(paste(OutputDir,"/Model_",vers,sep=""),showWarnings = FALSE)
         sapply(sousdos[-c(2,3)],function(isd)dir.create(paste(OutputDir,"/Model_",vers,"/",isd,sep=""),showWarnings = FALSE))
 
-        Flist<-resfunTHEME2017$Ftot
-        E<-resfunTHEME2017$E
+        Flist<-resfunTHEMEint$Ftot
+        E<-resfunTHEMEint$E
         nbg<-length(nbcomp)
         nbcomptot<-nbcomp
 

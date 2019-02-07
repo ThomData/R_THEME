@@ -48,7 +48,7 @@
     Vlist<-res$Vlist
     Mlist<-res$Mlist
 
-    resTHEME<-THEME:::.fun.THEME2017(Xtotmi,Ctot=Clist,E,resE,W,s=exps,l=expl,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi)
+    resTHEME<-THEME:::.fun.THEMEint(Xtotmi,Ctot=Clist,E,resE,W,s=exps,l=expl,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi)
     Ftot<-resTHEME$Ftot
     Ttot<-resTHEME$Ttot
     

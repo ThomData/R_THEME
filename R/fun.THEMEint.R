@@ -1,4 +1,4 @@
-.fun.THEME2017<-function(Xtot,Ctot,E,resE,W,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme"){
+.fun.THEMEint<-function(Xtot,Ctot,E,resE,W,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme"){
   nbcomp<-resE$nbcomp  
   res<-THEME:::.fun.initialisation(Ctot,W,E,nbcomp=nbcomp,Einfo=NULL)
   Ftot<-res$F
@@ -11,7 +11,7 @@
   
   aaarepeat<-0
   maxcor<-0
-  mylimit<-.99999
+  mylimit<-1-10^-5
   repeat{
     aaarepeat<-aaarepeat+1
     Ftotold<-Ftot
@@ -44,21 +44,10 @@
       #cat("CONVspace. ",aaarepeat," FTOT =",meancorspace,"\n")  
       break}
     if(aaarepeat>=5){if(meancorspace>.999){break}}
-    if(aaarepeat>=30){
-      if(aaarepeat==30){
-        mylimit<-.99*maxcor} #*maxcor
-      
-      if(aaarepeat>=90){
-        #browser()
-        }
-      if(aaarepeat>=100){
+    if(aaarepeat==30){mylimit<-.99*maxcor} #*maxcor
+    if(aaarepeat>=100){
         warningconv<-"PB"
-        #print dans un log cf sink cat("Maximimun number of iterations reached, before reaching convergence. Advise: Change number of components")
-        #cat("CONVvector. FTOT =",mincor,"\n") 
-        #cat("CONVspace. ",aaarepeat," FTOT =",meancorspace,"\n")
-        break
-        }
-      }
+        break}
     }  
   LogFileConv<-"Non Activated"
   return(list(Ftot=Ftot,Ttot=Ttot,LogFileConv=LogFileConv,resE=resE,E=E))

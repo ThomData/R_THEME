@@ -15,7 +15,7 @@
       }
 
   namesvar<-colnames(dt)
-
+  
   tempsfac<-(sapply(1:ncol(dt),function(i)is.factor(dt[,i])) & sapply(1:ncol(dt),function(i)nlevels(dt[,i])<nrow(dt)))
   tempsnum<-sapply(1:ncol(dt),function(i)is.numeric(dt[,i]))
   tempschar<-sapply(1:ncol(dt),function(i)is.character(dt[,i]))|(sapply(1:ncol(dt),function(i)is.factor(dt[,i]))&sapply(1:ncol(dt),function(i)nlevels(dt[,i])==nrow(dt)))

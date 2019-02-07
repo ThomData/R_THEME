@@ -63,7 +63,7 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
   THEME:::.sav.Data(Xtot,Mlist,P,OutputDir=OutputDir)
   
   if(is.null(updateProgress)){cat("THEME running... ")}
-  resTHEME<-THEME:::.fun.THEME2017(Xtot,Ctot=Clist,E,resE,W,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi)
+  resTHEME<-THEME:::.fun.THEMEint(Xtot,Ctot=Clist,E,resE,W,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi)
   if(is.null(updateProgress)){cat(" completed")}
   Ftot<-resTHEME$Ftot
   Ttot<-resTHEME$Ttot
@@ -161,7 +161,7 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
       Vlist<-res$Vlist
       Mlist<-res$Mlist
     
-      resTHEME<-THEME:::.fun.THEME2017(Xtot,Ctot=Clist,Eopti,resEopti,W,s=s,l=l,optEquiPondTau="Global",optEquiPondVarPhi="Theme")
+      resTHEME<-THEME:::.fun.THEMEint(Xtot,Ctot=Clist,Eopti,resEopti,W,s=s,l=l,optEquiPondTau="Global",optEquiPondVarPhi="Theme")
       Ftot<-resTHEME$Ftot
       Ttot<-resTHEME$Ttot
       mycoeff<-THEME:::.THEME.coeff(Vlist,Ftot,Ttot,Xtot,Xtotorig,Xtotmean,Xtotsd,resEopti)

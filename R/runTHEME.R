@@ -1,8 +1,8 @@
 THEME.UI <- function() {
-  appDir <- system.file("shiny-examples", "myapp", package = "THEME")
+  appDir <- system.file("myapp", package = "THEME")
   if (appDir == "") {
     stop("Could not find example directory. Try re-installing `mypackage`.", call. = FALSE)
   }
 
-  shiny::runApp(appDir, display.mode = "normal")
+  shiny::runApp(appDir, display.mode = "normal",launch.browser=TRUE)
 }
