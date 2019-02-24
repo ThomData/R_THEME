@@ -11,7 +11,7 @@ library(DT)
 appCSS <-
  "#color ~ .selectize-control.single .selectize-dropdown [data-value=X] { color: blue }
   #color ~ .selectize-control.single .selectize-dropdown [data-value=YES] { color: red }"
-
+path_save<-"Please select a folder:"
 # Define UI for random distribution application
 fluidPage(#theme = "bootstrap.css",
   tags$head(tags$style(HTML(appCSS))),
@@ -23,7 +23,7 @@ fluidPage(#theme = "bootstrap.css",
       conditionalPanel(condition="input.tabselected==1",
       tags$span(style="color:black",strong(("OVERALL PARAMETERS"))),
       tags$hr(style="border-color: grey;"),
-      
+
       fileInput("filecal", "Calibration set",
                 accept = c(
                   "text/csv",
@@ -63,6 +63,13 @@ fluidPage(#theme = "bootstrap.css",
       selectInput("optl","l: ",
                   seq(1,10,by=1),selected=1),
       tags$hr(style="border-color: grey;"),
+      
+      
+      shinyDirButton("outpufiles", "Choose a folder" ,
+                     title = path_save,
+                     buttonType = "default", class = NULL),
+      tags$hr(style="border-color: grey;"),
+      
       ##Action
       actionButton("goButton", "Go!",icon = icon("rocket"))
       #br()

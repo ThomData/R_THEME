@@ -1,6 +1,7 @@
 res2<<-NULL
 
 function(input, output, session) {
+  volumes = getVolumes()
   session$onSessionEnded(stopApp)
   optplot<-NULL
   optplot2<-NULL
@@ -183,21 +184,37 @@ function(input, output, session) {
 
 
 ## BUTTON For lauching THEME
+   observeEvent(input$outpufiles, {
+     
+   shinyDirChoose(input, "outpufiles", roots = volumes, session = 
+                    session)
+   if(!is.null(input$Btn_GetFolder)){
+     # browser()
+     myInputDir1 <<- parseDirPath(volumes, input$outpufiles)
+     output$path_save <- renderText(myInputDir1)
+
+     #Call your function here..... 
+     }
+  })
+   
    observeEvent(input$goButton, {
 
     listnamesblocksRe()
     res<-THEME:::.fun.listXE(Xdatacal()$dt,listnamesblocks,State(),input$nEquations,as.numeric(NBcomp()))
   
     if(res$LogComp=="Ok"){
-      CheminUser=getwd()
-      #browser()
+      CheminUser=parseDirPath(volumes, input$outpufiles)
+      #path.expand("~") #getwd()
+      if(length(CheminUser)==0){CheminUser=path.expand("~")}
+      
       OutputDir<<-paste0(CheminUser,"/THEME","_",format(Sys.time(), "%d%m%y_%H%M%S"))
-      cat("########################### PATH CHECKING :",OutputDir,"\n")
+      #cat("########################### PATH CHECKING :",OutputDir,"\n")
       
       dir.create(OutputDir)
-      cat("Exist dir",dir.exists(CheminUser),"\n")
-      cat("Exist dir",dir.exists(OutputDir),"\n")
-      cat("########################### END PATH CHECKING :",OutputDir,"\n")
+      #cat("Exist dir",dir.exists(CheminUser),"\n")
+      #cat("Exist dir",dir.exists(OutputDir),"\n")
+
+      cat(" Results are saved in :",OutputDir,"\n")
       
       E<-res$E
       Xlist<-res$Xlist
