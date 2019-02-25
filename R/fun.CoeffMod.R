@@ -33,6 +33,8 @@
     if(ncol(Ymat)>1){
       resrsq[[i]]<-sapply(1:length(summary(reslm)),function(j)summary(reslm)[[j]]$r.squared)
       }else{resrsq[[i]]<-summary(reslm)$r.squared}
+    resrsq[[i]]<-t(resrsq[[i]])
+    colnames(resrsq[[i]])<-colnames(Ymat)
 
     aaa<-0
 		Cstinlisttp<-0
@@ -60,10 +62,12 @@
               }
 
       Coeffinlisttemp<-Coefflist[[i]][[r]]%*%rescoeff[[i]][c(FALSE,myselectcoeff==r),]
+      colnames(Coeffinlisttemp)<-colnames(rescoeff[[i]])
       Coeffinlist[[i]][[r]]<-Coeffinlisttemp
       Cstinlisttp<-Cstinlisttp+Cstelist[[i]][[r]]%*%rescoeff[[i]][c(FALSE,myselectcoeff==r),]
       Cstinlisttemp<-Cstinlisttp+matrix(rescoeff[[i]][1,],ncol=ncol(Cstinlisttp),nrow=nrow(Cstinlisttp),byrow=TRUE)
       Cstinlist[[i]]<-matrix(Cstinlisttemp[1,],ncol=1)
+      rownames(Cstinlist[[i]])<-colnames(rescoeff[[i]])
       }
     }
   return(list(Coeffinlist=Coeffinlist,Cstinlist=Cstinlist,resE=resE,nbcomp=nbcomp,reslmR2=resrsq))   #,sousdos=sousdos
