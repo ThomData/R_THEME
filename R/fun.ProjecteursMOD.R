@@ -38,12 +38,14 @@
 #####################################
 ## Scaling function
 .fun.scale<-function(Xcal,resE,Xval=NULL){
+  Xcalorig<-
   rtocr<-sort(c(resE$rcov,resE$rF))
   Xcalmean<-vector("list",resE$R)
   Xcalsd<-vector("list",resE$R)
   Mlist<-vector("list",resE$R)
   W<-as.matrix(1/nrow(Xcal[[1]])*diag(1,nrow(Xcal[[1]])))
   for(r in rtocr){
+    dimnamesXcalr<-dimnames(Xcal[[r]])
     res<-scale(Xcal[[r]])
     M<-diag(1,nrow(Xcal[[r]]))
     Xcalmean[[r]]<-attr(res,"scaled:center")
@@ -55,6 +57,7 @@
       nrmat<-nrow(Xval[[r]])
       Xval[[r]]<-((Xval[[r]]-matrix(Xcalmean[[r]],ncol=ncmat,nrow=nrmat,byrow=TRUE))/matrix(Xcalsd[[r]],ncol=ncmat,nrow=nrmat,byrow=TRUE))
       }
+    dimnames(Xcal[[r]])<- dimnamesXcalr
     Mlist[[r]]<-diag(1/diag(t(Xcal[[r]])%*%W%*%Xcal[[r]]))
     }
   

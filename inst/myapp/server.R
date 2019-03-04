@@ -3,6 +3,7 @@ res2<<-NULL
 function(input, output, session) {
   volumes = getVolumes()
   session$onSessionEnded(stopApp)
+  param_yaml<-THEME:::.fun_Buildfolders(opt.build=FALSE)
   optplot<-NULL
   optplot2<-NULL
   windsizecorr<-1
@@ -189,14 +190,13 @@ function(input, output, session) {
    shinyDirChoose(input, "outpufiles", roots = volumes, session = 
                     session)
    if(!is.null(input$Btn_GetFolder)){
-     # browser()
      myInputDir1 <<- parseDirPath(volumes, input$outpufiles)
      output$path_save <- renderText(myInputDir1)
 
      #Call your function here..... 
      }
   })
-   
+
    observeEvent(input$goButton, {
 
     listnamesblocksRe()
@@ -204,16 +204,13 @@ function(input, output, session) {
   
     if(res$LogComp=="Ok"){
       CheminUser=parseDirPath(volumes, input$outpufiles)
-      #path.expand("~") #getwd()
       if(length(CheminUser)==0){CheminUser=path.expand("~")}
-      
-      OutputDir<<-paste0(CheminUser,"/THEME","_",format(Sys.time(), "%d%m%y_%H%M%S"))
-      #cat("########################### PATH CHECKING :",OutputDir,"\n")
-      
-      dir.create(OutputDir)
-      #cat("Exist dir",dir.exists(CheminUser),"\n")
-      #cat("Exist dir",dir.exists(OutputDir),"\n")
 
+      appDir <- system.file("myapp", package = "THEME")
+      param<-yaml:::read_yaml(file=file.path(appDir,"Config.yaml"))
+      OutputDir<<-file.path(CheminUser,paste0(param$Main_folder[1],format(Sys.time(), "%d%m%y_%H%M%S")))
+      #cat("########################### PATH CHECKING :",OutputDir,"\n")
+      dir.create(OutputDir)
       cat(" Results are saved in :",OutputDir,"\n")
       
       E<-res$E
@@ -253,12 +250,12 @@ function(input, output, session) {
 ## PLOT indivuald and variables window
    output$Modelplot=renderUI({
      if(input$goButton<1){return(NULL)}
-     vectmodel<-list.files(path =OutputDir,pattern="Model")
+     vectmodel<-list.files(path =OutputDir,pattern=param_yaml$nam_subfolder) ##"Model" et pas "Model_" BUG?
 
      if(length(vectmodel)==0){
        nbcomp<-NBcomp()
        if(!is.null(resE$rcov)){nbcomp[resE$rcov]<-"cov"}
-       vectmodel<-paste0("Model_",paste(nbcomp,collapse="_"),sep="")
+       vectmodel<-paste0(param_yaml$nam_subfolder,paste(nbcomp,collapse="_"),sep="")
         }else{optdos<<-TRUE}
 
      selectInput("Modelplot1","Model:",vectmodel,selected=vectmodel[1],width="200px") #)
@@ -268,7 +265,9 @@ function(input, output, session) {
      input$goButton
      versmodel<-input$Modelplot1
      if(optdos){
-       myblocks<-gsub(".txt", "", substring(list.files(path =paste0(OutputDir,"/",versmodel,"/Components",sep=""),pattern="ot"),6))
+       appDir <- system.file("myapp", package = "THEME")
+       param<-yaml:::read_yaml(file=file.path(appDir,"Config.yaml"))
+       myblocks<-gsub(".csv", "", substring(list.files(path =file.path(OutputDir,versmodel,param$list_subfoldername[["2"]]),pattern="_B"),4))
        myblocks<-paste0("B",myblocks)
        selectInput("blocktoplot1","Theme:",myblocks,selected=myblocks[1],width="120px") #)
        }else{return(NULL)}
@@ -278,7 +277,8 @@ function(input, output, session) {
      input$goButton
      versmodel<-input$Modelplot1
      if(optdos){
-      nbcomp<-read.table(file=paste(OutputDir,"/",versmodel,"/Design/nbcomp.txt",sep=""))$x #as.numeric(NBcomp()) #read
+      par.design<-THEME:::.fun.readparamyaml(OutputDir,versmodel)
+      nbcomp<-par.design$nbcomp
       group<-as.numeric(substring(input$blocktoplot1,2))
       if(is.null(nbcomp)){return(NULL)}
       selectInput("Xaxe1","x-axis:",1:nbcomp[group],selected=1,width="120px") #)
@@ -288,7 +288,8 @@ function(input, output, session) {
      input$goButton
      versmodel<-input$Modelplot1
      if(optdos){
-      nbcomp<-read.table(file=paste(OutputDir,"/",versmodel,"/Design/nbcomp.txt",sep=""))$x #as.numeric(NBcomp()) #read
+      par.design<-THEME:::.fun.readparamyaml(OutputDir,versmodel)
+      nbcomp<-par.design$nbcomp
       group<-as.numeric(substring(input$blocktoplot1,2))
       if(is.null(nbcomp)){return(NULL)}
       selectInput("Yaxe1","y-axis:",1:nbcomp[group],selected=min(2,nbcomp[group]),width="120px") #)
@@ -305,7 +306,7 @@ function(input, output, session) {
      if(opt=="copy"){corr<-.5}
      
      vers<-input$Modelplot1
-     resTHEME<-THEME:::.load.THEME(OutputDir=OutputDir,vers=vers)
+     resTHEME<-THEME:::.load.THEME(OutputDir=OutputDir,modelvers=vers)
      
      group=as.numeric(substring(input$blocktoplot1,2))
      comp=c(as.numeric(input$Xaxe1),as.numeric(input$Yaxe1))
@@ -345,9 +346,12 @@ function(input, output, session) {
      if(input$goButton<1){return(NULL)}
      vers<-input$Modelplot1 
      nbeqmodel<-1
-     if(file.exists(paste(OutputDir,"/",vers,"/Design/E.txt",sep=""))){
-       chem<-paste(OutputDir,"/",vers,"/Design/E.txt",sep="")
-       nbeqmodel<-nrow(read.table(file=chem))
+     appDir <- system.file("myapp", package = "THEME")
+     param<-yaml:::read_yaml(file=file.path(appDir,"Config.yaml"))
+
+     if(file.exists(file.path(OutputDir,vers,param$list_subfoldername[["1"]],"param.yaml"))){
+       par.design<-THEME:::.fun.readparamyaml(OutputDir,nameModel=vers)
+       nbeqmodel<-par.design$nbEq
        optdos2<<-TRUE
        selectInput("Yblockeqplot1","Equation:",1:nbeqmodel,selected=1,width="200px") #)
      }else{return(NULL)}
@@ -359,7 +363,7 @@ function(input, output, session) {
      nbeq<-as.numeric(input$Yblockeqplot1)
      if(length(nbeq)==0){return(NULL)}
      if(optdos2){
-       Ypred<-read.table(file=paste(OutputDir,"/",versmodel,"/Prediction/Ypred_SEERS_",nbeq,".txt",sep=""))
+       Ypred<-read.csv2(file=file.path(OutputDir,versmodel,param_yaml$list_subfolders[["7"]],paste0("Ypred_Eq",nbeq,".csv")),row.names=1)
        myYvar<-c("all",colnames(Ypred))
        optplot2<<-TRUE
        selectInput("Yvarplot1","Variable(s):",myYvar,selected="all",width="120px") #)
@@ -370,7 +374,7 @@ function(input, output, session) {
          corr<-1
          if(opt=="copy"){corr=.5}
          vers<-input$Modelplot1 #input$ModelplotPred1
-         resTHEME<-THEME:::.load.THEME(OutputDir=OutputDir,vers=vers)
+         resTHEME<-THEME:::.load.THEME(OutputDir=OutputDir,modelvers=vers)
          
          mycex=as.numeric(input$mycex)*corr
          macol=1
@@ -408,38 +412,42 @@ function(input, output, session) {
    
 
    ##SAVE PLOTS 
-   output$SavePlotButton2<-downloadHandler(filename=paste("Plot.Predictions_Eq",input$Yblockeqplot1,".png",sep=""),content=function(file){
-     ggsave(file,plot=fun.plotY(opt="copy"),device="png")
-     })
-   output$SavePlotButton<-downloadHandler(filename=function(){paste("Plot.IndVar_",input$blocktoplot1,"_",input$Xaxe1,".",input$Yaxe1,".png",sep="")},content=function(file){
-     ggsave(file,plot=fun.plotindvar(opt="copy"),device="png",width = 16, height = 8,dpi=1200, units = "cm")
-     })
-   
+     output$SavePlotButton2<-downloadHandler(filename=paste0("Plot.Predictions_Eq",input$Yblockeqplot1,".png"),content=function(file){
+       ggsave(file,plot=fun.plotY(opt="copy"),device="png")
+       })
+     output$SavePlotButton<-downloadHandler(filename=function(){paste("Plot.IndVar_",input$blocktoplot1,"_",input$Xaxe1,".",input$Yaxe1,".png",sep="")},content=function(file){
+       ggsave(file,plot=fun.plotindvar(opt="copy"),device="png",width = 16, height = 8,dpi=1200, units = "cm")
+       })
+
    ## PLOT MODEL CV Window
    output$YEqRMSEC=renderUI({
      if(input$goButton<1){return(NULL)}
      nbeqmodel<-1
-     vers<-list.files(OutputDir,pattern="Model_",full.names =FALSE)[1]
+     
+     vers<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =FALSE)[1]
 
-     allmodels<-list.files(OutputDir,pattern="Model_",full.names =TRUE)
+     allmodels<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =TRUE)
      if(length(allmodels)>0){
-       pathCV<-paste0(allmodels,"/","CV")
-       chem<-paste(allmodels[1],"/Design/E.txt",sep="")
-       nbeqmodel<-nrow(read.table(file=chem))
+       pathCV<-file.path(allmodels,param_yaml$list_subfolders[["8"]])
+       
+       par.design<-THEME:::.fun.readparamyaml(allmodels[1],nameModel=NULL)
+       nbeqmodel<-par.design$nbEq
+      
        selectInput("YEqRMSEC1","Equation:",c("All",1:nbeqmodel),selected=1,width="200px") #)
      }else{return(NULL)}
    })
 
    fun.plotModsel<-function(opt="none"){
-     allmodels<-list.files(OutputDir,pattern="Model_",full.names =TRUE)
+     allmodels<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =TRUE)
      
      if (length(allmodels)==0){return(NULL)}
      if (input$optCV=="NA"){return(NULL)}
      if (input$optBW=="NA"){return(NULL)}
      
-     chem<-paste(allmodels[1],"/Design/E.txt",sep="")
-     nbeqmodel<-nrow(read.table(file=chem))
-     pathCV<-paste0(allmodels,"/","CV")
+     par.design<-THEME:::.fun.readparamyaml(allmodels[1],nameModel=NULL)
+     nbeqmodel<-par.design$nbEq
+     
+     pathCV<-file.path(allmodels,param_yaml$list_subfolders[["8"]])
      
      resRMSE<-THEME:::.fun.compilCV(pathCV,neq=nbeqmodel)
      
@@ -458,7 +466,7 @@ function(input, output, session) {
    
    observeEvent(input$PlotButton3, {
      output$plotRMSE <- renderPlot({#ly({
-       allmodels<-list.files(OutputDir,pattern="Model_",full.names =TRUE)
+       allmodels<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =TRUE)
        if (length(allmodels)==0){return(NULL)}
        if (input$optCV=="NA"){return(NULL)}
        if (input$optBW=="NA"){return(NULL)}

@@ -1,122 +1,150 @@
 ##########################
 ## save data function
 ## functionsaveData
-.sav.Data<-function(Xtot,Mtot,P,OutputDir=NULL,sousdos=NULL){
-        if(is.null(sousdos)){sousdos<-c("Design","Themes","Metrics","Components","Correlations","Coefficients","R2","Tables","Prediction","CV")}
-        if(!is.null(OutputDir)){
-           sapply(sousdos[c(2,3)],function(isd)dir.create(paste(OutputDir,"/",isd,sep=""),showWarnings = FALSE))
+.sav.Data<-function(Xtot,Mtot,P,OutputDir=NULL){
+  if(!is.null(OutputDir)){
+    listfolders<-THEME:::.fun_Buildfolders(OutputDir,nameModel=NULL,opt.build=TRUE)$list_mainfolders
 
-           for(i in 1:length(Xtot)){
-              write.table(Xtot[[i]],file=paste(OutputDir,"/",sousdos[2],"/Xtot_",i,".txt",sep=""))
-              write.table(Mtot[[i]],file=paste(OutputDir,"/",sousdos[3],"/Minvtot_",i,".txt",sep=""))
-              }
-           write.table(P,file=paste(OutputDir,"/",sousdos[3],"/P.txt",sep=""))
-           }
-        }
+    for(i in 1:length(Xtot)){
+      Xtoti<-as.data.frame(Xtot[[i]])
+      Xtoti<-data.frame("obs"=rownames(Xtoti),Xtoti)
+      write.csv2(Xtoti,file=file.path(OutputDir,listfolders[1],paste0("Bcs_",i,".csv")),row.names=FALSE)
+      write.csv2(Mtot[[i]],file=file.path(OutputDir,listfolders[2],paste0("Minvtot_",i,".csv")))
+    }
+    write.csv2(P,file=file.path(OutputDir,listfolders[2],"P.csv"))
+    }
+  }
 
 ##########################
 ## save Xorig function
 ## functionsaveXorig
-.sav.Xorig<-function(Xtot,OutputDir=NULL,sousdos=NULL){
-      if(is.null(sousdos)){sousdos<-c("Design","Themes","Metrics","Components","Correlations","Coefficients","R2","Tables","Prediction","CV")}
-      if(!is.null(OutputDir)){
-        sapply(sousdos[c(2,3)],function(isd)dir.create(paste(OutputDir,"/",isd,sep=""),showWarnings = FALSE))
+.sav.Xorig<-function(Xtot,OutputDir=NULL){
+  if(!is.null(OutputDir)){
+    listfolders<-THEME:::.fun_Buildfolders(OutputDir,nameModel=NULL,opt.build=TRUE)$list_mainfolders
 
-        for(i in 1:length(Xtot)){
-          write.table(Xtot[[i]],file=paste(OutputDir,"/",sousdos[2],"/Xtotorig_",i,".txt",sep=""))
-        }
+    for(i in 1:length(Xtot)){
+      Xtoti<-as.data.frame(Xtot[[i]])
+      Xtoti<-data.frame("obs"=rownames(Xtoti),Xtoti)
+      write.csv2(Xtoti,file=file.path(OutputDir,listfolders[1],paste0("B_",i,".csv")),row.names=FALSE)
       }
     }
+  }
 
 ##########################
 ## save THEME results function
 ## functionsaveTHEME
-.sav.THEME<-function(resfunTHEMEint,resfunTHEMEcoeff=NULL,resfunTHEMEpred=NULL,OutputDir=NULL,sousdos=NULL){
+.sav.THEME<-function(resfunTHEMEint,resfunTHEMEcoeff=NULL,resfunTHEMEpred=NULL,OutputDir=NULL){
 
-   if(!is.null(OutputDir)){
-        resE<-resfunTHEMEint$resE
-        nbcomp<-resE$nbcomp
-        if(!is.null(resE$rcov)){nbcomp[resE$rcov]<-"cov"}
-        vers<-paste(nbcomp,collapse="_")
-        nbcomp<-resE$nbcomp
-        OutputDircomp<-paste(OutputDir,"/Model_",vers,sep="")
-        if(is.null(sousdos)){sousdos<-c("Design","Themes","Metrics","Components","Correlations","Coefficients","R2","Tables","Prediction","CV")}
-        dir.create(paste(OutputDir,"/Model_",vers,sep=""),showWarnings = FALSE)
-        sapply(sousdos[-c(2,3,5,8)],function(isd)dir.create(paste(OutputDir,"/Model_",vers,"/",isd,sep=""),showWarnings = FALSE))
+  if(!is.null(OutputDir)){
 
-        Flist<-resfunTHEMEint$Ftot
-        E<-resfunTHEMEint$E
-        nbg<-length(nbcomp)
-        nbcomptot<-nbcomp
+    resE<-resfunTHEMEint$resE
+    nbcomp<-resE$nbcomp
+    if(!is.null(resE$rcov)){nbcomp[resE$rcov]<-"cov"}
+    vers<-paste(nbcomp,collapse="_")
+    nbcomp<-resE$nbcomp
 
-		    for(i in resE$rF){
-			    write.table(Flist[[i]],file=paste(OutputDir,"/Model_",vers,"/",sousdos[4],"/Ftot_",i,".txt",sep=""))
-			    }
+    param_yaml<-THEME:::.fun_Buildfolders(opt.build=FALSE)
+    #OutputDircomp<-paste(OutputDir,"/",param_yaml$nam_subfolder,vers,sep="")
+    nameModel<-paste0(param_yaml$nam_subfolder,vers)
+    dir.create(file.path(OutputDir,nameModel),showWarnings = FALSE)
 
-       write.table(E,file=paste(OutputDir,"/Model_",vers,"/",sousdos[1],"/E.txt",sep=""))
-		   write.table(nbg,file=paste(OutputDir,"/Model_",vers,"/",sousdos[1],"/nbgoupes.txt",sep=""))
-		   write.table(nbcomptot,file=paste(OutputDir,"/Model_",vers,"/",sousdos[1],"/nbcomp.txt",sep=""))
+    res<-THEME:::.fun_Buildfolders(OutputDir,nameModel=nameModel,opt.build=TRUE)
 
-      if(!is.null(resfunTHEMEcoeff)){
-         Coeffinlist<-resfunTHEMEcoeff$Coeffinlist
-         Cstinlist<-resfunTHEMEcoeff$Cstinlist
-         R2vareq<-resfunTHEMEcoeff$reslmR2
-         for(q in 1:length(resE$rEq)){
-           sapply(resE$rEq[[q]],function(r)write.table(Coeffinlist[[q]][[r]],file=paste(OutputDir,"/Model_",vers,"/",sousdos[6],"/Beta_",q,"_",r,".txt",sep="")))
-           write.table(t(Cstinlist[[q]]),file=paste(OutputDir,"/Model_",vers,"/",sousdos[6],"/Cste_",q,".txt",sep=""))
-           write.table(R2vareq[[q]],file=paste(OutputDir,"/Model_",vers,"/",sousdos[7],"/R2_",q,".txt",sep=""))
-           }
-         }
+    Flist<-resfunTHEMEint$Ftot
+    E<-resfunTHEMEint$E
+    nbg<-length(nbcomp)
+    nbcomptot<-nbcomp
 
-      if(!is.null(resfunTHEMEpred)){
-        Ypred<-resfunTHEMEpred$Ypred
-        for(q in 1:length(resE$rEq)){
-              write.table(Ypred[[q]],file=paste(OutputDir,"/Model_",vers,"/",sousdos[9],"\\Ypred_SEERS_",q,".txt",sep=""))
-              }
+    for(i in resE$rF){
+      Flisti<-as.data.frame(Flist[[i]])
+      Flisti<-data.frame("obs"=rownames(Flisti),Flisti)
+      colnames(Flisti)<-c("obs",paste0("F",1:(ncol(Flisti)-1)))
+      write.csv2(Flisti,file=file.path(OutputDir,nameModel,param_yaml$list_subfolders[["2"]],paste0("F_B",i,".csv")),row.names=FALSE)
+      }
+
+    THEME:::.fun.createyaml(E,nbcomptot,OutputDir,nameModel)
+
+    if(!is.null(resfunTHEMEcoeff)){
+      Coeffinlist<-resfunTHEMEcoeff$Coeffinlist
+      Cstinlist<-resfunTHEMEcoeff$Cstinlist
+      R2vareq<-resfunTHEMEcoeff$reslmR2
+
+      for(q in 1:length(resE$rEq)){
+        if(q==length(resE$rEq)){x<-resE$rEq[[q]][-1]}else{x<-resE$rEq[[q]]}
+        sapply(x,function(r){
+          coeffcur<-as.data.frame(Coeffinlist[[q]][[r]])
+          coeffcur<-data.frame("code"=rownames(coeffcur),coeffcur)
+          write.csv2(coeffcur,file=file.path(OutputDir,nameModel,param_yaml$list_subfolders[["4"]],paste0("Beta_Eq",q,"_B",r,".csv")),row.names=FALSE)
+          }
+          )
+        Cstinlistq<-as.data.frame(t(Cstinlist[[q]]))
+        Cstinlistq<-data.frame("code"="cst.",Cstinlistq)
+        write.csv2(Cstinlistq,file=file.path(OutputDir,nameModel,param_yaml$list_subfolders[["4"]],paste0("Cste_Eq",q,".csv")),row.names=FALSE)
+        R2vareqq<-as.data.frame(t(R2vareq[[q]]))
+        R2vareqq<-data.frame("code"="R2",R2vareq)
+        write.csv2(R2vareq[[q]],  file=file.path(OutputDir,nameModel,param_yaml$list_subfolders[["5"]],paste0("R2_Eq",q,".csv")),row.names=FALSE)
+      }
+    }
+
+    if(!is.null(resfunTHEMEpred)){
+      Ypred<-resfunTHEMEpred$Ypred
+
+      for(q in 1:length(resE$rEq)){
+        Ypredq<-data.frame(Ypred[[q]])
+        Ypredq<-data.frame("code"=rownames(Ypredq),Ypredq)
+        write.csv2(Ypredq,file=file.path(OutputDir,nameModel,param_yaml$list_subfolders[["7"]],paste0("Ypred_Eq",q,".csv")),row.names=FALSE)
         }
       }
     }
+  }
+
 
 ##########################
 ## save THEME Cross Val function
 ## functionsaveTHEMECV
-.sav.THEMECrossVal<-function(resTHEMECV,OutputDir=NULL,sousdos=NULL){
-      if(!is.null(OutputDir)){
-        resE<-resTHEMECV$resE
-        nbcomp<-resE$nbcomp
-        if(!is.null(resE$rcov)){nbcomp[resE$rcov]<-"cov"}
-        vers<-paste(nbcomp,collapse="_")
-        nbcomp<-resE$nbcomp
-        OutputDircomp<-paste(OutputDir,"/Model_",vers,sep="")
-        if(is.null(sousdos)){sousdos<-c("Design","Themes","Metrics","Components","Correlations","Coefficients","R2","Tables","Prediction","CV")}
-        dir.create(paste(OutputDir,"/Model_",vers,sep=""),showWarnings = FALSE)
-        sapply(sousdos[-c(2,3,5,8)],function(isd)dir.create(paste(OutputDir,"/Model_",vers,"/",isd,sep=""),showWarnings = FALSE))
+.sav.THEMECrossVal<-function(resTHEMECV,OutputDir=NULL){
+  if(!is.null(OutputDir)){
+    resE<-resTHEMECV$resE
+    nbcomp<-resE$nbcomp
+    if(!is.null(resE$rcov)){nbcomp[resE$rcov]<-"cov"}
+    vers<-paste(nbcomp,collapse="_")
+    nbcomp<-resE$nbcomp
 
-        resCV<-resTHEMECV$resCV
-        R2CV<-resTHEMECV$R2CV
-        Ypredtot<-resTHEMECV$Ypredtot
+    param_yaml<-THEME:::.fun_Buildfolders(OutputDir,nameModel=NULL,opt.build=FALSE)
+    #OutputDircomp<-paste(OutputDir,"/",param_yaml$nam_subfolder,vers,sep="")
 
-		    for(i in 1:length(resE$rEq)){
-          write.table(Ypredtot[[i]],file=paste(OutputDir,"/Model_",vers,"/",sousdos[10],"/CV_Ypred_","Eq_",i,".txt",sep=""))
-          write.table(resCV[[i]],file=paste(OutputDir,"/Model_",vers,"/",sousdos[10],"/CV_Eq_",i,".txt",sep=""))
-			    if(is.vector(R2CV[[i]])){   names(R2CV[[i]])<-   names(resCV[[i]])}
-				  if(is.matrix(R2CV[[i]])){dimnames(R2CV[[i]])<-dimnames(resCV[[i]])}
-				  write.table(R2CV[[i]],file=paste(OutputDir,"/Model_",vers,"/",sousdos[10],"/CV_R2_Eq_",i,".txt",sep=""))
-          }
-        }
-      }
+    nameModel<-paste0(param_yaml$nam_subfolder,vers)
+    dir.create(file.path(OutputDir,nameModel),showWarnings = FALSE)
+    param_yaml<-THEME:::.fun_Buildfolders(OutputDir,nameModel=nameModel,opt.build=TRUE)
 
+    resCV<-resTHEMECV$resCV
+    R2CV<-resTHEMECV$R2CV
+    Ypredtot<-resTHEMECV$Ypredtot
+
+    namesY<-THEME:::.fun.writeorreadyaml()
+
+    for(i in 1:length(resE$rEq)){
+      Ypredtoti<-data.frame("obs"=rownames(Ypredtot[[i]]),as.data.frame(Ypredtot[[i]]))
+      write.csv2(Ypredtoti,file=paste(OutputDir,"/",nameModel,"/",param_yaml$list_subfolder[["8"]],"/CV_Ypred_","Eq",i,".csv",sep=""),row.names=FALSE)
+      R2CVi<-data.frame("code"=namesY$saveparam_yaml$names.col,"R2cv"=as.vector(R2CV[[i]]))
+      resCVi<-data.frame("code"=namesY$saveparam_yaml$names.col,"RMSECV"=as.vector(resCV[[i]]))
+      write.csv2(resCVi,file=paste0(OutputDir,"/",nameModel,"/",param_yaml$list_subfolder[["8"]],"/CV_Eq",i,".csv"),row.names=FALSE)
+      write.csv2(R2CVi,file=paste0(OutputDir,"/",nameModel,"/",param_yaml$list_subfolder[["8"]],"/CV_R2_Eq",i,".csv"),row.names=FALSE)
+    }
+  }
+}
 ##########################
 ## load THEME data resuts function
 ## fun.readTHEME
-.load.THEME<-function(OutputDir=NULL,vers,sousdos=NULL){
-  if(is.null(sousdos)){sousdos<-c("Design","Themes","Metrics","Components","Correlations","Coefficients","R2","Tables","Prediction","CV")}
+.load.THEME<-function(OutputDir=NULL,modelvers){
 
   if((!is.null(OutputDir))&(file.exists(OutputDir))){
-    E<-read.table(file=paste(OutputDir,"/",vers,"/",sousdos[1],"/E.txt",sep=""))
+    param_yaml<-THEME:::.fun_Buildfolders(opt.build=FALSE)
 
-    nbgroups<-read.table(file=paste(OutputDir,"/",vers,"/",sousdos[1],"/nbgoupes.txt",sep=""))$x
-    nbcomp<-read.table(file=paste(OutputDir,"/",vers,"/",sousdos[1],"/nbcomp.txt",sep=""))$x
+    par.design<-THEME:::.fun.readparamyaml(OutputDir,modelvers)
+    E<-par.design$E
+    nbgroups<-par.design$nbg
+    nbcomp<-par.design$nbcomp
 
     myFsel<-(1:nbgroups)[nbcomp!=0]
     Flist<-vector("list",nbgroups)
@@ -124,20 +152,20 @@
     Xlistorig<-vector("list",nbgroups)
     Mlist<-vector("list",nbgroups)
     for(i in myFsel){
-      Flist[[i]]<-read.table(file=paste(OutputDir,"/",vers,"/",sousdos[4],"/Ftot_",i,".txt",sep=""))
-      Mlist[[i]]<-read.table(file=paste(OutputDir,"/",sousdos[3],"/Minvtot_",i,".txt",sep=""))
+      Flist[[i]]<-read.csv2(file=file.path(OutputDir,modelvers,param_yaml$list_subfolder[["2"]],paste0("F_B",i,".csv")),row.names=1)
+      Mlist[[i]]<-read.csv2(file=file.path(OutputDir,param_yaml$list_mainfolder[["2"]],paste0("Minvtot_",i,".csv")))
       }
     for(i in 1:nbgroups){
-      Xlist[[i]]<-read.table(file=paste(OutputDir,"/",sousdos[2],"/Xtot_",i,".txt",sep=""))
-      Xlistorig[[i]]<-read.table(file=paste(OutputDir,"/",sousdos[2],"/Xtotorig_",i,".txt",sep=""))
+      Xlist[[i]]<-read.csv2(file=file.path(OutputDir,param_yaml$list_mainfolder[["1"]],paste0("Bcs_",i,".csv")),row.names=1)
+      Xlistorig[[i]]<-read.csv2(file=file.path(OutputDir,param_yaml$list_mainfolder[["1"]],paste0("B_",i,".csv")),row.names=1)
       }
-    P<-read.table(file=paste(OutputDir,"/",sousdos[3],"/P.txt",sep=""))
+    P<-read.csv2(file=file.path(OutputDir,param_yaml$list_mainfolder[["2"]],"P.csv"))
     Ypred<-vector("list",nrow(E))
 
     for(q in 1:nrow(E)){
-      Ypred[[q]]<-read.table(file=paste(OutputDir,"/",vers,"/",sousdos[9],"\\Ypred_SEERS_",q,".txt",sep=""))
+      Ypred[[q]]<-read.csv2(file=file.path(OutputDir,modelvers,param_yaml$list_subfolder[["7"]],paste0("Ypred_Eq",q,".csv")),row.names=1)
       }
-    }
+   }
   return(list(Xlist=Xlist,Xlistorig=Xlistorig,Flist=Flist,nbg=nbgroups,nbcomp=nbcomp,Mlist=Mlist,P=P,E=E,Ypred=Ypred))
   }
 
@@ -152,8 +180,8 @@
       RMSECV<-vector("list")
       R2CV<-vector("list")
       for(q in 1:neq){
-        RMSECV[[q]]<-read.table(file=paste(pathcv,"/CV_Eq_",q,".txt",sep=""))
-        R2CV[[q]]<-read.table(file=paste(pathcv,"/CV_R2_Eq_",q,".txt",sep=""))
+        RMSECV[[q]]<-read.csv2(file=paste0(pathcv,"/CV_Eq",q,".csv"),row.names=1)
+        R2CV[[q]]<-read.csv2(file=paste0(pathcv,"/CV_R2_Eq",q,".csv"),row.names=1)
         }
 
       }

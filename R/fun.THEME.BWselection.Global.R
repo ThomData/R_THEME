@@ -109,9 +109,13 @@
 	  if(!is.null(resE$rcov)){nbcomp[resE$rcov]<-"cov"}
 	  vers<-paste(nbcomp,collapse="_")
 
-	  OutputDircomp<-paste(OutputDir,"/Model_",vers,"/BW",sep="")
-		dir.create(paste(OutputDir,"/Model_",vers,"/BW",sep=""))
-		write.table(gamma,file=paste(OutputDir,"/Model_",vers,"/BW/gamma.txt",sep=""))
+	  param_yaml<-.fun_Buildfolders(opt.build=FALSE)
+	  nameModel<-paste0(param_yaml$nam_subfolder,vers)
+	  param_yaml<-.fun_Buildfolders(OutputDir,nameModel=nameModel,opt.build=TRUE)
+	  if("9"%in%param_yaml$subnamesfolder){
+  	  OutputDircomp<-file.path(OutputDir,nameModel,param_yaml$list_subfolders[["9"]])
+  	  write.table(gamma,file=file.path(OutputDircomp,"gamma.txt",sep=""))
+  	  }
 		}
 
 

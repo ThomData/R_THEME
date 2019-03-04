@@ -1,0 +1,20 @@
+list_subfoldername:
+    1: _System
+    2: Components
+    3: NOD_Correlations
+    4: coefficients
+    5: R2
+    6: NOD_Tables
+    7: Prediction
+    8: CV
+    9: NOD_BackWard
+
+list_mainfoldername:
+    1: Themes
+    2: Metrics
+
+Main_folder:
+    - THEME_
+
+Sub_Folder:
+    - Model_

@@ -27,7 +27,9 @@
 
 THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bwopondChoice=NA,updateProgress = NULL){
 
-  sousdos<-c("Design","Themes","Metrics","Components","Correlations","Coefficients","R2","Tables","Prediction","CV")
+  
+  param_yaml<-.fun_Buildfolders(opt.build=FALSE)
+  
   optEquiPondTau="Global"
   optEquiPondVarPhi="Theme"
 
@@ -61,7 +63,8 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
   Mlist<-res$Mlist
 
   THEME:::.sav.Data(Xtot,Mlist,P,OutputDir=OutputDir)
-  
+  THEME:::.fun.writeorreadyaml(dbY=Xtot[[resE$rEq[[length(resE$rEq)]][1]]])
+
   if(is.null(updateProgress)){cat("THEME running... ")}
   resTHEME<-THEME:::.fun.THEMEint(Xtot,Ctot=Clist,E,resE,W,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi)
   if(is.null(updateProgress)){cat(" completed")}

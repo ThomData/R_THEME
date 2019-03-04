@@ -63,6 +63,7 @@
 
       Coeffinlisttemp<-Coefflist[[i]][[r]]%*%rescoeff[[i]][c(FALSE,myselectcoeff==r),]
       colnames(Coeffinlisttemp)<-colnames(rescoeff[[i]])
+      rownames(Coeffinlisttemp)<-colnames(Xtot[[r]])
       Coeffinlist[[i]][[r]]<-Coeffinlisttemp
       Cstinlisttp<-Cstinlisttp+Cstelist[[i]][[r]]%*%rescoeff[[i]][c(FALSE,myselectcoeff==r),]
       Cstinlisttemp<-Cstinlisttp+matrix(rescoeff[[i]][1,],ncol=ncol(Cstinlisttp),nrow=nrow(Cstinlisttp),byrow=TRUE)
