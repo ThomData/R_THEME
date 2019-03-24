@@ -18,7 +18,7 @@
 ## Norme function
 .fun.Norm<-function(x,M=1){
 	nc<-length(x)
-	if(is.matrix(M)==FALSE){M<-diag(1,nc)}
+	if(!is.matrix(M)){M<-diag(1,nc)}
   Normeucl<-as.numeric(sqrt(t(x)%*%M%*%x))
   Normeucl.inv<-1/Normeucl
 	x<-x*Normeucl.inv
@@ -26,11 +26,13 @@
 	}
 
 #####################################
-# Projection on F function 
+# Projection on F function
 .fun.PprojXonF<-function(F,M=NULL,X=NULL){
   if(is.null(M)){M<-diag(1,nrow(F))}
   if(is.null(X)){X<-diag(1,nrow(F))}
-  Pp<-F%*%solve(t(F)%*%M%*%F)%*%t(F)%*%M%*%X
+  FMF<-crossprod(F,M)%*%F
+  FMX<-crossprod(F,(M%*%X))
+  Pp<-(F%*%solve(FMF))%*%FMX
   Pportho<-(X-Pp)
 	return(list(Pp=Pp,Pportho=Pportho))
 	}
@@ -58,9 +60,9 @@
       Xval[[r]]<-((Xval[[r]]-matrix(Xcalmean[[r]],ncol=ncmat,nrow=nrmat,byrow=TRUE))/matrix(Xcalsd[[r]],ncol=ncmat,nrow=nrmat,byrow=TRUE))
       }
     dimnames(Xcal[[r]])<- dimnamesXcalr
-    Mlist[[r]]<-diag(1/diag(t(Xcal[[r]])%*%W%*%Xcal[[r]]))
+    Mlist[[r]]<-diag(1/diag(crossprod(Xcal[[r]],W)%*%Xcal[[r]]))
     }
-  
+
   return(list(Xcal=Xcal,Xval=Xval,Xcalmean=Xcalmean,Xcalsd=Xcalsd,Mlist=Mlist))
   }
 
@@ -69,10 +71,11 @@
 .fun.eigen_non_null<-function(A,J=1,optoptim=FALSE,myseuil=10^(-4)){
 	nc<-ncol(A)
 	nr<-nrow(A)
-  mySVD<-eigen(t(A)%*%A)
-  if(optoptim==TRUE){J<-sum(na.omit((mySVD$values^.5))> myseuil)} 
-  U<-mySVD$vectors[,1:J]  
-  Lambda<-diag(mySVD$values[1:J]^.5,J) 
+	AA<-crossprod(A)
+  mySVD<-eigen(AA)
+  if(optoptim==TRUE){J<-sum(na.omit((mySVD$values^.5))> myseuil)}
+  U<-mySVD$vectors[,1:J]
+  Lambda<-diag(mySVD$values[1:J]^.5,J)
   return(list(U=U,Lambda=Lambda))
 	}
 
@@ -92,7 +95,7 @@
   if(is.null(M)){M<-diag(1,ncol(X))}
   Mundemi<-THEME:::.fun.quasi_power(solve(M),-.5)$Aa
   Xs<-X%*%Mundemi
-  XsWXs<-t(Xs)%*%W%*%Xs
+  XsWXs<-crossprod(Xs,W)%*%Xs
   mysvd<-THEME:::.fun.eigen_non_null(XsWXs,optoptim=TRUE)
   C<-Xs%*%mysvd$U
   V<-(Mundemi)%*%mysvd$U
@@ -112,8 +115,9 @@
    for(r in rF){
      resXtoC<-THEME:::.fun.XtoC(X=Xlist[[r]],W=W)
      Clist[[r]]<-resXtoC$C
-     Vlist[[r]]<-resXtoC$V 
-     Mlist[[r]]<-t(as.matrix(resXtoC$C))%*%W%*%as.matrix(resXtoC$C)
+     Vlist[[r]]<-resXtoC$V
+     Ccur<-as.matrix(resXtoC$C)
+     Mlist[[r]]<-crossprod(Ccur,W)%*%Ccur
     }
    return(list(Clist=Clist,Vlist=Vlist,Mlist=Mlist))
    }
@@ -123,22 +127,35 @@
 .fun.AB_R2dep<-function(C,W,H){
   if(is.null(H)==FALSE){
     PHC<-THEME:::.fun.PprojXonF(F=H,M=W,X=C)$Pp
-    }else{PHC<-diag(1,nrow(W))}     
-  A<-t(C)%*%W%*%PHC
-  B=t(C)%*%W%*%C
+    }else{PHC<-diag(1,nrow(W))}
+  CW<-crossprod(C,W)
+  A<-CW%*%PHC
+  B<-CW%*%C
   return(list(A=A,B=B))
   }
 
 .fun.AB_R2exp<-function(C,d,W,H){
   if(is.null(H)==FALSE){
-    PH<-THEME:::.fun.PprojXonF(F=H,M=W)$Pp
-    PHortho<-THEME:::.fun.PprojXonF(F=H,M=W)$Pportho
+    PH<-THEME:::.fun.PprojXonF(F=H,M=W)
+    PHortho<-PH$Pportho
+    PH<-PH$Pp
     }else{
-       PH<-diag(0,nrow(C))                
-       PHortho<-diag(1,nrow(C))
-      }
-  A<-t(PHortho%*%C)%*%(as.numeric(t(d)%*%W%*%PH%*%d)*W+W%*%d%*%t(d)%*%W)%*%(PHortho%*%C)
-  B<-t(C)%*%W%*%(PHortho%*%C)
+       PH<-diag(0,nrow(C)) #Sparce Matrix
+       PHortho<-diag(1,nrow(C)) #Sparce Matrix
+    }
+  PHorthoC<-PHortho%*%C
+  dW<-crossprod(d,W)
+  num<-as.numeric(dW%*%(PH%*%d))
+  WddW<-crossprod(dW)
+
+  part2<-(num*W+WddW)%*%PHorthoC
+
+  A<-crossprod(PHorthoC,part2)
+  #A<-t(PHorthoC)%*%(num*W+W%*%d%*%t(d)%*%W)%*%PHorthoC
+
+  B<-crossprod(C,W)%*%PHorthoC
+  rm(PHorthoC)
+  gc()
   return(list(A=A,B=B))
   }
 
@@ -163,9 +180,9 @@
    if(sum((c(rcov,rF,rns)%in%c(1:(ncol(E)/2)))==FALSE)==0){}
    }else{print("test= Invalide")}
  if(is.null(nbcomp)==FALSE){nbcomp[!c(1:(ncol(E)/2))%in%rF]<-0}
- rEq<-vector("list") 
+ rEq<-vector("list")
  for(Eq in 1:nrow(E)){rEq[[Eq]]<-c(1:Rtot,1:Rtot)[E[Eq,]!=0]}
- 
+
  return(list(R=R,Rtot=Rtot,rns=rns,rF=rF,rcov=rcov,nbcomp=nbcomp,rEq=rEq))
  }
 
@@ -208,7 +225,7 @@
 .fun.StructRel<-function(Cr,W,optSR="VPI",lambda=.5){
   G<-diag(1,ncol(Cr))
   if(optSR=="VPI"){
-    CrWcr<-t(Cr)%*%W%*%Cr
+    CrWcr<-crossprod(Cr,W)%*%Cr
     G<-(1-lambda)*CrWcr+lambda*diag(1,ncol(Cr))
     }
   return(list(G=G))
@@ -225,23 +242,26 @@
   rcov<-Einfo$rcov
   rEq<-Einfo$rEq
   Ftilde<-NULL
+
   if(!r%in%rF){
     cat("Thematic-Block without component Fr \n")
     opt<-"NO"
-    } 
+    }
   if(opt=="OK"){
-    rsel<-NULL     
+    rsel<-NULL
     for(Eq in 1:nrow(E)){
      if(r%in%rEq[[Eq]]){rsel<-c(rsel,rEq[[Eq]][!rEq[[Eq]]%in%r])}
-     }
-    for(i in rsel){ 
-      if(2%in%E[,i+ncol(E)/2]){
-        Ftilde<-cbind(Ftilde,Ctot[[i]])
-        }else{Ftilde<-cbind(Ftilde,Ftot[[i]])}
-      
-      }
     }
-  
+    ## cf comment ca fonctionne et essayer de vire la boucle et le cbind
+    Ftilde<-lapply(rsel,function(i){
+      if(2%in%E[,i+ncol(E)/2]){
+        cbind(Ftilde,Ctot[[i]])
+        }else{cbind(Ftilde,Ftot[[i]])}
+      })
+    Ftilde<-do.call(cbind, Ftilde)
+
+    }
+
   return(list(Ftilde=Ftilde))
   }
 
@@ -258,35 +278,41 @@
   if(!r%in%rF){
     cat("Thematic-Block without component Fr \n")
     opt<-"NO"
-    } 
-  if(opt=="OK"){                                 
+    }
+  if(opt=="OK"){
     if(E[q,r+ncol(E)/2]==1){
       BlocExpEqq<-(1:Rtot)[E[q,(1:Rtot)+ncol(E)/2]==1]
       BlocCovEqq<-(1:Rtot)[E[q,(1:Rtot)+ncol(E)/2]==2]
-      if(length(BlocCovEqq)>0){ 
-        Hmr<-NULL
-        for(i in BlocCovEqq){
-          Hmr<-cbind(Hmr,Ctot[[i]])
-          }
-        }else{Hmr<-NULL}  
+      if(length(BlocCovEqq)>0){
+
+        Hmr<-do.call(cbind, Xlist[BlocCovEqq])
+        #Hmr<-NULL
+        #for(i in BlocCovEqq){
+        #  Hmr<-cbind(Hmr,Ctot[[i]])
+        #  }
+        }else{Hmr<-NULL}
       BlocExpEqq<-BlocExpEqq[BlocExpEqq!=r]
       if(compk>1){Hmr<-cbind(Hmr,Ftot[[r]][,1:(compk-1)])}
-      for(i in BlocExpEqq){
-        Hmr<-cbind(Hmr,Ftot[[i]])
-        }
+
+      Hmr<-cbind(Hmr,do.call(cbind, Ftot[BlocExpEqq]))
+      #for(i in BlocExpEqq){
+      #  Hmr<-cbind(Hmr,Ftot[[i]])
+      #  }
       }
     if(E[q,r]==1){
       BlocExpEqq<-(1:Rtot)[E[q,(1:Rtot)+ncol(E)/2]==1]
       BlocCovEqq<-(1:Rtot)[E[q,(1:Rtot)+ncol(E)/2]==2]
       if(length(BlocCovEqq)>0){
-        for(i in BlocCovEqq){
-          Hmr<-cbind(Hmr,Ctot[[i]])
-          }
-        }else{Hmr<-NULL}
-      for(i in BlocExpEqq){
-        Hmr<-cbind(Hmr,Ftot[[i]])
-        }
-      }  
+        Hmr<-cbind(Hmr,do.call(cbind, Ctot[BlocCovEqq]))
+        #for(i in BlocCovEqq){
+        #  Hmr<-cbind(Hmr,Ctot[[i]])
+        #  }
+      }else{Hmr<-NULL}
+      Hmr<-cbind(Hmr,do.call(cbind, Ftot[BlocExpEqq]))
+      #for(i in BlocExpEqq){
+      #  Hmr<-cbind(Hmr,Ftot[[i]])
+      #  }
+      }
     }
 
   return(list(Hmr=Hmr))
@@ -294,7 +320,7 @@
 
 #####################################
 ## Initialisation of Ftot and Ttot
-.fun.initialisation<-function(Clist,W,E,nbcomp,Einfo=NULL){ 
+.fun.initialisation<-function(Clist,W,E,nbcomp,Einfo=NULL){
   if(is.null(Einfo)){Einfo<-THEME:::.fun.rvect(E)}
   R<-Einfo$R
   Rtot<-Einfo$Rtot
@@ -305,31 +331,34 @@
   for(r in rF){
     Ftot[[r]]<-Clist[[r]][,1:nbcomp[r],drop=FALSE]
     }
- 
+
   for(r in rF){
     Cr<-Clist[[r]]
+    CrW<-crossprod(Cr,W)
     Fcur<-Ftot[[r]]
     Tcur<-matrix(NA,ncol=nbcomp[r],nrow=ncol(Cr))
+
     for(k in 1:nbcomp[r]){
       Ftilde<-THEME:::.fun.Ftilde(Ftot,Clist,E,r,Einfo=NULL)$Ftilde
-      A<-t(Cr)%*%W%*%Ftilde
+      A<-CrW%*%Ftilde
       if(k>1){
-        L<-t(Cr)%*%W%*%Fcur[,1:(k-1)]
+        L<-CrW%*%Fcur[,1:(k-1)]
         Atilde<-THEME:::.fun.PprojXonF(L,M=diag(1,nrow(L)),A)$Pportho
         }else{
           Atilde<-A#t(Cr)%*%W
           }
       AAtilde<-Atilde%*%t(Atilde)
       tnew<-THEME:::.fun.eigen_non_null(AAtilde,J=1,optoptim=FALSE)$U
-      tnew<-THEME:::.fun.Norm(tnew,M=t(Cr)%*%W%*%Cr)$x  
+      MM<-CrW%*%Cr
+      tnew<-THEME:::.fun.Norm(tnew,M=MM)$x
       fnew<-Cr%*%tnew
       Fcur[,k]<-fnew
-      Tcur[,k]<-tnew 
+      Tcur[,k]<-tnew
       Ftot[[r]]<-Fcur
       }
     Ttot[[r]]<-Tcur
     }
-  return(list(Ttot=Ttot,Ftot=Ftot))  
+  return(list(Ttot=Ttot,Ftot=Ftot))
   }
 
 #####################################
@@ -344,22 +373,30 @@
 
   repeat{
    kkk<-kkk+1
+   t0<-Sys.time()
    rescrit<-THEME:::.fun.crit(Xr,Ftot,Ctot,Ttot,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)
+   t1<-Sys.time()
+   print(t1-t0)
    mycrit<-rescrit$mycrit
    tnew<-rescrit$tnew
    CritNablagamma<-rescrit$CritNablagamma
-      
+
       optionopt<-FALSE
-      if(kkk>500){optionopt<-TRUE}
-      if(optionopt==TRUE){
+      if(kkk>500){
+          optionopt<-TRUE
+          cat("nb iter maxcrit=",kkk)}
+      if(optionopt){
         Ttottemp<-Ttot
         Ftottemp<-Ftot
         Ttottemp[[r]][,compk]<-tnew
         Ftottemp[[r]][,compk]<-Cr%*%tnew
+        t0<-Sys.time()
         mycritnew<-THEME:::.fun.crit(Xr,Ftottemp,Ctot,Ttottemp,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)$mycrit
+        t1<-Sys.time()
+        print(t1-t0)
         k<-0
         tcand<-tnew
-  
+        t0<-Sys.time()
         repeat{
           if(mycritnew>=mycrit){break}
           k<-k+1
@@ -367,12 +404,17 @@
           M<-crossprod(Cr,Wr)%*%Cr
           tcand<-THEME:::.fun.Norm(tcand,M=M)$x
           Ttottemp[[r]][,compk]<-tcand
-          Ftottemp[[r]][,compk]<-Cr%*%tcand    
+          Ftottemp[[r]][,compk]<-Cr%*%tcand
           mycritnew<-THEME:::.fun.crit(Xr,Ftottemp,Ctot,Ttottemp,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)$mycrit
           }
-        tnew<-as.numeric(sign(crossprod(tnew,tcand)))*tcand 
+        t1<-Sys.time()
+        print(t1-t0)
+        tnew<-as.numeric(sign(crossprod(tnew,tcand)))*tcand
         }
       tnew<-as.numeric(sign(crossprod(tcur,tnew)))*tnew
+      print(kkk)
+      print(cor(tnew,tcur))
+      print(sum((tnew-tcur)^2))
       if(sum((tnew-tcur)^2)<10^(-6)){break}else{tcur<-tnew}
       Ttot[[r]][,compk]<-tnew
       Ftot[[r]][,compk]<-Cr%*%tnew
