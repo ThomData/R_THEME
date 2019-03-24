@@ -118,7 +118,7 @@ function(input, output, session) {
    output$EquationsNB=renderUI({
      selectInput("nEquations",h5(strong("Number of Equations: ")),choices=c(1:3))
      })
-   
+
    output$SelectBlocksconfig=renderUI({
      myselgcc<-NULL
      if(!is.null(Xdatacal()$dtcodeblocks)){myselgcc<-Xdatacal()$VBAname}
@@ -157,8 +157,8 @@ function(input, output, session) {
           mylisnamedispo<-THEME:::.fun.blocksnames(data=Xdatacal()$dt,listname=NULL,myblock=myblock)$vardispo
           selectInput('Variableselection', label=input$SelectBlock, choices=mylisnamedispo,selected=listnamesblocks[[myblock]],multiple=TRUE, selectize=TRUE)
         })
-      }  
-      
+      }
+
       }
     })
 
@@ -176,7 +176,7 @@ function(input, output, session) {
     })
 
    listnamesblocksRe<-reactive({
-     input$Variableselection 
+     input$Variableselection
      if(!is.null(myblock)){
       listnamesblocks[myblock]<-list(input$Variableselection)
       listnamesblocks<<-listnamesblocks
@@ -186,14 +186,14 @@ function(input, output, session) {
 
 ## BUTTON For lauching THEME
    observeEvent(input$outpufiles, {
-     
-   shinyDirChoose(input, "outpufiles", roots = volumes, session = 
+
+   shinyDirChoose(input, "outpufiles", roots = volumes, session =
                     session)
    if(!is.null(input$Btn_GetFolder)){
      myInputDir1 <<- parseDirPath(volumes, input$outpufiles)
      output$path_save <- renderText(myInputDir1)
 
-     #Call your function here..... 
+     #Call your function here.....
      }
   })
 
@@ -201,7 +201,7 @@ function(input, output, session) {
 
     listnamesblocksRe()
     res<-THEME:::.fun.listXE(Xdatacal()$dt,listnamesblocks,State(),input$nEquations,as.numeric(NBcomp()))
-  
+
     if(res$LogComp=="Ok"){
       CheminUser=parseDirPath(volumes, input$outpufiles)
       if(length(CheminUser)==0){CheminUser=path.expand("~")}
@@ -212,7 +212,7 @@ function(input, output, session) {
       #cat("########################### PATH CHECKING :",OutputDir,"\n")
       dir.create(OutputDir)
       cat(" Results are saved in :",OutputDir,"\n")
-      
+
       E<-res$E
       Xlist<-res$Xlist
       nbcomp<-as.numeric(NBcomp())
@@ -222,7 +222,7 @@ function(input, output, session) {
       l<-as.numeric(input$optl)
       cvvChoice<-as.numeric(input$optCV)
       bwopondChoice<-as.numeric(input$optBW)
-  
+
       updateProgress <- function(value = NULL, detail = NULL) {
         if (is.null(value)) {
           value <- progress$getValue()
@@ -304,13 +304,13 @@ function(input, output, session) {
    fun.plotindvar<-function(opt="none"){
      corr<-1
      if(opt=="copy"){corr<-.5}
-     
+
      vers<-input$Modelplot1
      resTHEME<-THEME:::.load.THEME(OutputDir=OutputDir,modelvers=vers)
-     
+
      group=as.numeric(substring(input$blocktoplot1,2))
      comp=c(as.numeric(input$Xaxe1),as.numeric(input$Yaxe1))
-     
+
      if(diff(comp)==0){return(NULL)}
      mycex=as.numeric(input$mycex)*corr
      macol=1
@@ -322,13 +322,13 @@ function(input, output, session) {
      mycexlab=as.numeric(input$mycexlab)*corr
      mycexaxis=as.numeric(input$mycexaxis)*corr
      mycextitle=as.numeric(input$mycextitle)*corr
-     
+
      resGraphind<-THEME:::.Plot.THEME.Individuals(Ftot,Xtot,group,comp,titre="",mycex,myoffset=0.5,macol,labeloption,mycexlab,mycexaxis,mycextitle)
      resGraphvar<-THEME:::.Plot.THEME.Variables(Ftot,Xtot,P,group,comp,titre="",mycex,myoffset=0.5,1,labeloption,mycexlab,mycexaxis,mycextitle)
      plist<-list(resGraphind$p,resGraphvar$p)
      grid.arrange(grobs=plist,ncol=length(plist))
      }
-   
+
 
    observeEvent(input$PlotButton, {
      output$plotind <- renderPlot({#ly({
@@ -344,7 +344,7 @@ function(input, output, session) {
 ## PLOT PREDICTION Window
    output$Yblockeqplot=renderUI({
      if(input$goButton<1){return(NULL)}
-     vers<-input$Modelplot1 
+     vers<-input$Modelplot1
      nbeqmodel<-1
      appDir <- system.file("myapp", package = "THEME")
      param<-yaml:::read_yaml(file=file.path(appDir,"Config.yaml"))
@@ -375,14 +375,14 @@ function(input, output, session) {
          if(opt=="copy"){corr=.5}
          vers<-input$Modelplot1 #input$ModelplotPred1
          resTHEME<-THEME:::.load.THEME(OutputDir=OutputDir,modelvers=vers)
-         
+
          mycex=as.numeric(input$mycex)*corr
          macol=1
-         
+
          if(!is.null(input$mycolor1)){
            if(input$mycolor1!="NA"){macol<-Xdatacal()$dtcodecol[,input$mycolor1]}
            }
-         
+
          labeloption="None"
          windsizecorr<<-.5
          if(input$Labelprintplot=="Yes")labeloption="Visible"
@@ -390,13 +390,13 @@ function(input, output, session) {
          mycexlab=as.numeric(input$mycexlab)*corr
          mycexaxis=as.numeric(input$mycexaxis)*corr
          mycextitle=as.numeric(input$mycextitle)*corr
-         
+
          resGraphPred<-Plot.THEME.Prediction(resTHEME,neq=as.numeric(input$Yblockeqplot1),varsel=input$Yvarplot1,titre="",mycex,myoffset=0.5,macol,labeloption,mycexlab,mycexaxis,mycextitle)
          p<-resGraphPred$p
          p
-         }   
-     
-   
+         }
+
+
  observeEvent(input$PlotButton, {
   output$plotY <- renderPlot({#ly({
      if (file.exists(OutputDir)==FALSE){return(NULL)}
@@ -409,9 +409,9 @@ function(input, output, session) {
    }
    )
    })
-   
 
-   ##SAVE PLOTS 
+
+   ##SAVE PLOTS
      output$SavePlotButton2<-downloadHandler(filename=paste0("Plot.Predictions_Eq",input$Yblockeqplot1,".png"),content=function(file){
        ggsave(file,plot=fun.plotY(opt="copy"),device="png")
        })
@@ -423,34 +423,34 @@ function(input, output, session) {
    output$YEqRMSEC=renderUI({
      if(input$goButton<1){return(NULL)}
      nbeqmodel<-1
-     
+
      vers<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =FALSE)[1]
 
      allmodels<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =TRUE)
      if(length(allmodels)>0){
        pathCV<-file.path(allmodels,param_yaml$list_subfolders[["8"]])
-       
+
        par.design<-THEME:::.fun.readparamyaml(allmodels[1],nameModel=NULL)
        nbeqmodel<-par.design$nbEq
-      
+
        selectInput("YEqRMSEC1","Equation:",c("All",1:nbeqmodel),selected=1,width="200px") #)
      }else{return(NULL)}
    })
 
    fun.plotModsel<-function(opt="none"){
      allmodels<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =TRUE)
-     
+
      if (length(allmodels)==0){return(NULL)}
      if (input$optCV=="NA"){return(NULL)}
      if (input$optBW=="NA"){return(NULL)}
-     
+
      par.design<-THEME:::.fun.readparamyaml(allmodels[1],nameModel=NULL)
      nbeqmodel<-par.design$nbEq
-     
+
      pathCV<-file.path(allmodels,param_yaml$list_subfolders[["8"]])
-     
+
      resRMSE<-THEME:::.fun.compilCV(pathCV,neq=nbeqmodel)
-     
+
      if(input$YEqRMSEC1=="All"){
        resPlotRMSE<-THEME:::.Plot.THEME.RMSE(resRMSE)
        p1<-resPlotRMSE$pCVmean
@@ -463,7 +463,7 @@ function(input, output, session) {
      plist<-list(p1,p2)
      grid.arrange(grobs=plist,ncol=length(plist))
      }
-   
+
    observeEvent(input$PlotButton3, {
      output$plotRMSE <- renderPlot({#ly({
        allmodels<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =TRUE)
@@ -471,17 +471,17 @@ function(input, output, session) {
        if (input$optCV=="NA"){return(NULL)}
        if (input$optBW=="NA"){return(NULL)}
        fun.plotModsel()
-        
+
      },height = function() {
        session$clientData$output_plotRMSE_width/2.5
      }
      )
    })
-   
+
    output$SavePlotButton3<-downloadHandler(filename=function(){paste("Plot.Modsel_",input$YEqRMSEC1,".png",sep="")},content=function(file){
      ggsave(file,plot=fun.plotModsel(opt="copy"),device="png",width = 16, height = 8,dpi=1200, units = "cm")
      })
-   
+
    #observeEvent(input$goButton, {
    #   hideTab(inputId = "tabselected", target = "Cross-validation")
    #   })

@@ -373,10 +373,10 @@
 
   repeat{
    kkk<-kkk+1
-   t0<-Sys.time()
+   #t0<-Sys.time()
    rescrit<-THEME:::.fun.crit(Xr,Ftot,Ctot,Ttot,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)
-   t1<-Sys.time()
-   print(t1-t0)
+   #t1<-Sys.time()
+   #print(t1-t0)
    mycrit<-rescrit$mycrit
    tnew<-rescrit$tnew
    CritNablagamma<-rescrit$CritNablagamma
@@ -390,13 +390,13 @@
         Ftottemp<-Ftot
         Ttottemp[[r]][,compk]<-tnew
         Ftottemp[[r]][,compk]<-Cr%*%tnew
-        t0<-Sys.time()
+        #t0<-Sys.time()
         mycritnew<-THEME:::.fun.crit(Xr,Ftottemp,Ctot,Ttottemp,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)$mycrit
-        t1<-Sys.time()
-        print(t1-t0)
+        #t1<-Sys.time()
+        #print(t1-t0)
         k<-0
         tcand<-tnew
-        t0<-Sys.time()
+        #t0<-Sys.time()
         repeat{
           if(mycritnew>=mycrit){break}
           k<-k+1
@@ -407,8 +407,8 @@
           Ftottemp[[r]][,compk]<-Cr%*%tcand
           mycritnew<-THEME:::.fun.crit(Xr,Ftottemp,Ctot,Ttottemp,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)$mycrit
           }
-        t1<-Sys.time()
-        print(t1-t0)
+        #t1<-Sys.time()
+        #print(t1-t0)
         tnew<-as.numeric(sign(crossprod(tnew,tcand)))*tcand
         }
       tnew<-as.numeric(sign(crossprod(tcur,tnew)))*tnew
