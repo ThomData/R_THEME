@@ -363,7 +363,7 @@
 
 #####################################
 ## Function: Gamma criteria maximisation
-.fun.maxcrit<-function(Ftot,Ttot,r,E,Ctot,Xr,Wr,compk,nbcomp,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme"){
+.fun.maxcrit<-function(Ftot,Ttot,r,E,Ctot,Xr,Wr,compk,nbcomp,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme",epsconv=10^(-6)){
   tcur<-Ttot[[r]][,compk]
   Cr<-Ctot[[r]]
   myxichi<-THEME:::.fun.xichi(E,nbcomp,s=s,optEquiPondTau,optEquiPondVarPhi)
@@ -412,10 +412,10 @@
         tnew<-as.numeric(sign(crossprod(tnew,tcand)))*tcand
         }
       tnew<-as.numeric(sign(crossprod(tcur,tnew)))*tnew
-      print(kkk)
-      print(cor(tnew,tcur))
-      print(sum((tnew-tcur)^2))
-      if(sum((tnew-tcur)^2)<10^(-6)){break}else{tcur<-tnew}
+      #print(kkk)
+      #print(cor(tnew,tcur))
+      #print(sum((tnew-tcur)^2))
+      if(sum((tnew-tcur)^2)<epsconv){break}else{tcur<-tnew}
       Ttot[[r]][,compk]<-tnew
       Ftot[[r]][,compk]<-Cr%*%tnew
       }
