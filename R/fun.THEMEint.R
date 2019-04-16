@@ -1,14 +1,14 @@
-.fun.THEMEint<-function(Xtot,Ctot,E,resE,W,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme"){
-  nbcomp<-resE$nbcomp  
+.fun.THEMEint<-function(Xtot,Ctot,E,resE,W,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme",myEps=10^(-6)){
+  nbcomp<-resE$nbcomp
   res<-THEME:::.fun.initialisation(Ctot,W,E,nbcomp=nbcomp,Einfo=NULL)
   Ftot<-res$F
   Ttot<-res$T
-  if(length(resE$rcov)>0){ 
+  if(length(resE$rcov)>0){
     for(jj in 1:length(resE$rcov)){
       Ftot[[resE$rcov[jj]]]<-Xtot[[resE$rcov[jj]]]
       }
-    }       
-  
+    }
+
   aaarepeat<-0
   maxcor<-0
   mylimit<-1-10^-5
@@ -17,14 +17,14 @@
     Ftotold<-Ftot
     for(myr in resE$rF){
       for(compk in 1:nbcomp[myr]){
-        res<-THEME:::.fun.maxcrit(Ftot,Ttot,r=myr,E,Ctot=Ctot,Xr=Xtot[[myr]],Wr=W,compk=compk,nbcomp=nbcomp,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi)
+        res<-THEME:::.fun.maxcrit(Ftot,Ttot,r=myr,E,Ctot=Ctot,Xr=Xtot[[myr]],Wr=W,compk=compk,nbcomp=nbcomp,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,epsconv=myEps)
         Ttotnew<-res$Ttot
         Ftotnew<-res$Ftot
         Ttot<-Ttotnew
         Ftot<-Ftotnew
         }
       }
-    
+
     mincor<-min(unlist(sapply(resE$rF,function(i)diag(abs(cor(Ftot[[i]],Ftotold[[i]]))))))
     oldw <- getOption("warn")
     options(warn = -1)
@@ -35,20 +35,20 @@
           )
       ))
     options(warn = oldw)
-    
+
     meancorspace<-mean(meancorspace,na.rm=TRUE)
     if(mincor>maxcor){maxcor<-mincor}
     if(mincor>mylimit){
-      #if(aaarepeat>=30){cat("n iteration higher than",aaarepeat)} 
-      #cat("CONVvector. FTOT =",mincor,"\n") 
-      #cat("CONVspace. ",aaarepeat," FTOT =",meancorspace,"\n")  
+      #if(aaarepeat>=30){cat("n iteration higher than",aaarepeat)}
+      #cat("CONVvector. FTOT =",mincor,"\n")
+      #cat("CONVspace. ",aaarepeat," FTOT =",meancorspace,"\n")
       break}
     if(aaarepeat>=5){if(meancorspace>.999){break}}
     if(aaarepeat==30){mylimit<-.99*maxcor} #*maxcor
     if(aaarepeat>=100){
         warningconv<-"PB"
         break}
-    }  
+    }
   LogFileConv<-"Non Activated"
   return(list(Ftot=Ftot,Ttot=Ttot,LogFileConv=LogFileConv,resE=resE,E=E))
 }

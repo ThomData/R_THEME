@@ -63,14 +63,16 @@ fluidPage(#theme = "bootstrap.css",
       selectInput("optl","l: ",
                   seq(1,10,by=1),selected=1),
       tags$hr(style="border-color: grey;"),
-      
-      
+
+
       shinyDirButton("outpufiles", "Choose a folder" ,
                      title = path_save,
                      buttonType = "default", class = NULL),
       tags$hr(style="border-color: grey;"),
-      
+
       ##Action
+      selectInput("calcoption","Calculation Option: ",
+                  c("Robust","Balance","Fast")),
       actionButton("goButton", "Go!",icon = icon("rocket"))
       #br()
       ),

@@ -1,4 +1,4 @@
-.THEME.CrossVal<-function(Xtot,E,resE,nbtest=1,optordersample=NULL,optEquiPondTau="Global",optEquiPondVarPhi="Theme",exps=1,expl=1,updateProgress=NULL){
+.THEME.CrossVal<-function(Xtot,E,resE,nbtest=1,optordersample=NULL,optEquiPondTau="Global",optEquiPondVarPhi="Theme",exps=1,expl=1,updateProgress=NULL,myEps=10^(-6)){
 ## ADD an help
 ## Initialisation
 
@@ -48,7 +48,7 @@
     Vlist<-res$Vlist
     Mlist<-res$Mlist
 
-    resTHEME<-THEME:::.fun.THEMEint(Xtotmi,Ctot=Clist,E,resE,W,s=exps,l=expl,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi)
+    resTHEME<-THEME:::.fun.THEMEint(Xtotmi,Ctot=Clist,E,resE,W,s=exps,l=expl,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,myEps=myEps)
     Ftot<-resTHEME$Ftot
     Ttot<-resTHEME$Ttot
 

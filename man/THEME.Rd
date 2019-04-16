@@ -6,7 +6,7 @@
 \usage{
 THEME(Xlist, Xnew = NULL, E, nbcomp, s = 0.5, l = 1,
   OutputDir = NULL, cvvChoice = NA, bwopondChoice = NA,
-  updateProgress = NULL)
+  updateProgress = NULL, myEps = 10^(-6))
 }
 \arguments{
 \item{Xlist}{List of R matrix thematic blocks of the thematic model used for calibration.}
@@ -18,7 +18,7 @@ When a theme is declared additional-explanatory, no component will ba calculated
 
 \item{nbcomp}{Vector containing the numbers of components to extract in themes.}
 
-\item{s}{Parameter that tunes the balance of the structural relevance (SR) of components with respect to the goodness of fit (GOF) in the THEME criterion. 
+\item{s}{Parameter that tunes the balance of the structural relevance (SR) of components with respect to the goodness of fit (GOF) in the THEME criterion.
 Value 1 means that only the SR will be taken into account, and not the GOF. Value 0 means that only the GOF will be taken into account, and not the SR. Default-value .5 gives equal importance to SR and GOF.}
 
 \item{l}{Parameter that tunes the locality of variable-bundles the components should focus on. Default 1 is the minimum value and indicates that no local focussing is to be performed.}

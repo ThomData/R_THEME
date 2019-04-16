@@ -234,8 +234,13 @@ function(input, output, session) {
       progress <- shiny::Progress$new(style = "notification")
       progress$set(message = "THEME running", value = 0)
       on.exit(progress$close())
+      #recuper l'option "Calculation Option"
+      print(input$calcoption)
+      if(input$calcoption=="Robust"){myEps=10^(-6)}
+      if(input$calcoption=="Balance"){myEps=10^(-4)}
+      if(input$calcoption=="Fast"){myEps=10^(-2)}
 
-      resTHEME<-THEME(Xlist,Xnew=NULL,E,nbcomp,s=s,l=l,OutputDir=OutputDir,cvvChoice=cvvChoice,bwopondChoice=bwopondChoice,updateProgress=updateProgress)
+      resTHEME<-THEME(Xlist,Xnew=NULL,E,nbcomp,s=s,l=l,OutputDir=OutputDir,cvvChoice=cvvChoice,bwopondChoice=bwopondChoice,updateProgress=updateProgress,myEps=myEps)
 
       Xtot<<-resTHEME$Xtot
       Ftot<<-resTHEME$Flist
