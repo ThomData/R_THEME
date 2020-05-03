@@ -29,7 +29,7 @@
       tAt<-as.numeric(t(tcur)%*%A%*%tcur)
       tBt<-as.numeric(t(tcur)%*%B%*%tcur)
       log(tAt/tBt)})
-    Psi.de.tdq<-Psi.de.tdp+xir*sum(unlist(Psi.de.texp))
+    Psi.de.tdq<-Psi.de.tdq+xir*sum(unlist(Psi.de.texp)) #Avant 11/03/2020 Psi.de.tdp+xir*sum(unlist(Psi.de.texp))
 
     Atilde_p2tp<-lapply(1:ncol(Fdq),function(j){
       A<-ABexp[[j]]$A
@@ -115,11 +115,11 @@
     deltaPhi_p3<-2*chir*(Ntilde)%*%tcur
     phi.de.t<-chir*log((phi.de.t)^(1/l))
 
-    ## Criterai and gradient
+    ## Criteria and gradient
     mycrit<-Psi.de.tdq+Psi.de.tdp+phi.de.t
     CritNablagamma<-deltaPsi_p1+deltaPsi_p2+deltaPhi_p3
 
-    ## ICI LE Gr à modifié avec lambda
+    ## ICI LE Gr à modifier avec lambda
     Gr<-THEME:::.fun.StructRel(Cr,Wr,lambda=0.5)$G
     CrWcr<-crossprod(Cr,Wr)%*%Cr
     Grinv<-solve(Gr)

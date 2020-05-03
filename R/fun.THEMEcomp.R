@@ -27,8 +27,7 @@
 
 THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bwopondChoice=NA,updateProgress = NULL,myEps=10^(-6)){
 
-
-  param_yaml<-.fun_Buildfolders(opt.build=FALSE)
+  param_yaml<-THEME:::.fun_Buildfolders(opt.build=FALSE)
 
   optEquiPondTau="Global"
   optEquiPondVarPhi="Theme"
@@ -39,12 +38,12 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
   EX[t(E)==" "]<-0
   EX[t(E)=="X"]<-1
   EX[t(E)=="Y"]<-0
-  EX[t(E)=="T"]<-2
+  EX[t(E)=="Z"]<-2
   EY<-matrix(0,ncol=nbeq,nrow=nbg)
   EY[t(E)==" "]<-0
   EY[t(E)=="X"]<-0
   EY[t(E)=="Y"]<-1
-  EY[t(E)=="T"]<-0
+  EY[t(E)=="Z"]<-0
   E<-cbind(t(EY),t(EX))
   P<-as.matrix(1/nrow(Xlist[[1]])*diag(1,nrow(Xlist[[1]])))
   W<-P
@@ -66,7 +65,8 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
   THEME:::.fun.writeorreadyaml(dbY=Xtot[[resE$rEq[[length(resE$rEq)]][1]]])
 
   if(is.null(updateProgress)){cat("THEME running... ")}
-  resTHEME<-THEME:::.fun.THEMEint(Xtot,Ctot=Clist,E,resE,W,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,myEps=myEps)
+  #
+  resTHEME<-THEME:::.fun.THEMEint(Xtot,Ctot=Clist,E,resE,W,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,myEps=myEps,OutputDir=OutputDir)
   if(is.null(updateProgress)){cat(" completed")}
   Ftot<-resTHEME$Ftot
   Ttot<-resTHEME$Ttot
@@ -101,7 +101,7 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
     on.exit(progress2$close())
     if(is.null(updateProgress)){cat("THEME CrossValidation ", text,"... ")}
 
-    rescv<-THEME:::.THEME.CrossVal(Xtotorig,E,resE,nbtest=cvvChoice,optordersample=NULL,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,exps=s,expl=l,updateProgress=updateProgress2)
+    rescv<-THEME:::.THEME.CrossVal(Xtotorig,E,resE,nbtest=cvvChoice,optordersample=NULL,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,exps=s,expl=l,updateProgress=updateProgress2,myEps=myEps,OutputDir=OutputDir)
     THEME:::.sav.THEMECrossVal(rescv,OutputDir=OutputDir)
     ordersamplecv<-rescv$ordersample
 
@@ -151,7 +151,7 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
       progress2$set(message = "CV running", value = 0)
       on.exit(progress2$close())
 
-      rescv<-THEME:::.THEME.CrossVal(Xtotorig,Eopti,resEopti,nbtest=cvvChoice,optordersample=ordersamplecv,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,exps=s,expl=l,updateProgress=updateProgress2)
+      rescv<-THEME:::.THEME.CrossVal(Xtotorig,Eopti,resEopti,nbtest=cvvChoice,optordersample=ordersamplecv,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,exps=s,expl=l,updateProgress=updateProgress2,myEps=myEps,OutputDir=OutputDir)
       progress2$close()
 
       THEME:::.sav.THEMECrossVal(rescv,OutputDir=OutputDir)

@@ -285,7 +285,7 @@
       BlocCovEqq<-(1:Rtot)[E[q,(1:Rtot)+ncol(E)/2]==2]
       if(length(BlocCovEqq)>0){
 
-        Hmr<-do.call(cbind, Xlist[BlocCovEqq])
+        Hmr<-do.call(cbind, Ctot[BlocCovEqq])
         #Hmr<-NULL
         #for(i in BlocCovEqq){
         #  Hmr<-cbind(Hmr,Ctot[[i]])
@@ -363,63 +363,77 @@
 
 #####################################
 ## Function: Gamma criteria maximisation
-.fun.maxcrit<-function(Ftot,Ttot,r,E,Ctot,Xr,Wr,compk,nbcomp,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme",epsconv=10^(-6)){
+.fun.maxcrit<-function(Ftot,Ttot,r,E,Ctot,Xr,Wr,compk,nbcomp,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme",epsconv=10^(-6),OutputDir=NULL){
+  listfolders<-THEME:::.fun_Buildfolders(OutputDir,nameModel=NULL,opt.build=TRUE)$list_mainfolders
   tcur<-Ttot[[r]][,compk]
   Cr<-Ctot[[r]]
   myxichi<-THEME:::.fun.xichi(E,nbcomp,s=s,optEquiPondTau,optEquiPondVarPhi)
 
   mycritcur<- -100000
   kkk<-0
-
+  #vectmycritnew<-NULL
+  #critconv<-NULL
   repeat{
    kkk<-kkk+1
-   #t0<-Sys.time()
+
    rescrit<-THEME:::.fun.crit(Xr,Ftot,Ctot,Ttot,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)
-   #t1<-Sys.time()
-   #print(t1-t0)
-   mycrit<-rescrit$mycrit
+
+   mycritnew<-rescrit$mycrit
+   #vectmycritnew<-c(vectmycritnew,mycritnew)
+
    tnew<-rescrit$tnew
    CritNablagamma<-rescrit$CritNablagamma
 
       optionopt<-FALSE
-      if(kkk>500){
+      if(kkk>20){
           optionopt<-TRUE
-          cat("nb iter maxcrit=",kkk)}
+          #cat("nb iter maxcrit=",kkk,"... ")
+          }
       if(optionopt){
         Ttottemp<-Ttot
         Ftottemp<-Ftot
         Ttottemp[[r]][,compk]<-tnew
         Ftottemp[[r]][,compk]<-Cr%*%tnew
-        #t0<-Sys.time()
-        mycritnew<-THEME:::.fun.crit(Xr,Ftottemp,Ctot,Ttottemp,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)$mycrit
-        #t1<-Sys.time()
-        #print(t1-t0)
+
+        mycritnew2<-THEME:::.fun.crit(Xr,Ftottemp,Ctot,Ttottemp,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)$mycrit
         k<-0
         tcand<-tnew
-        #t0<-Sys.time()
         repeat{
-          if(mycritnew>=mycrit){break}
+          #vectmycritnew<-c(vectmycritnew,mycritnew2)
+          #critconv<-c(critconv,sum((tnew-tcur)^2))
+          if(mycritnew2>=mycritnew){
+            mycritcur<-mycritnew2
+            break}
           k<-k+1
           tcand<-tcur+tnew/2^k
           M<-crossprod(Cr,Wr)%*%Cr
           tcand<-THEME:::.fun.Norm(tcand,M=M)$x
           Ttottemp[[r]][,compk]<-tcand
           Ftottemp[[r]][,compk]<-Cr%*%tcand
-          mycritnew<-THEME:::.fun.crit(Xr,Ftottemp,Ctot,Ttottemp,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)$mycrit
+          mycritnew2<-THEME:::.fun.crit(Xr,Ftottemp,Ctot,Ttottemp,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)$mycrit
           }
-        #t1<-Sys.time()
-        #print(t1-t0)
+
         tnew<-as.numeric(sign(crossprod(tnew,tcand)))*tcand
         }
       tnew<-as.numeric(sign(crossprod(tcur,tnew)))*tnew
-      #print(kkk)
-      #print(cor(tnew,tcur))
-      #print(sum((tnew-tcur)^2))
-      if(sum((tnew-tcur)^2)<epsconv){break}else{tcur<-tnew}
+
       Ttot[[r]][,compk]<-tnew
       Ftot[[r]][,compk]<-Cr%*%tnew
+      #critconv<-c(critconv,sum((tnew-tcur)^2))
+      #print(vectmycritnew)
+      epsconv<-min(10^(-4),epsconv)
+      if(kkk>1){
+        if(sqrt(sum((mycritnew-mycritcur)^2))<epsconv){
+          #write.csv2(vectmycritnew,file=file.path(OutputDir,listfolders[2],"critconv.csv"))
+          #write.csv2(critconv,file=file.path(OutputDir,listfolders[2],"crittconv.csv"))
+          break}else{mycritcur<-mycritnew}
+        }else{mycritcur<-mycritnew}
+      if(sum((tnew-tcur)^2)<epsconv){
+        #write.csv2(critconv,file=file.path(OutputDir,listfolders[2],"crittconv.csv"))
+        #write.csv2(vectmycritnew,file=file.path(OutputDir,listfolders[2],"critconv.csv"))
+        break}else{tcur<-tnew}
       }
 
-  return(list(tnew=tnew,Ttot=Ttot,Ftot=Ftot))
+  return(list(tnew=tnew,Ttot=Ttot,Ftot=Ftot,mycritnew=mycritnew))
   }
 

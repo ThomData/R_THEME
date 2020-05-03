@@ -1,6 +1,7 @@
-.THEME.CrossVal<-function(Xtot,E,resE,nbtest=1,optordersample=NULL,optEquiPondTau="Global",optEquiPondVarPhi="Theme",exps=1,expl=1,updateProgress=NULL,myEps=10^(-6)){
+.THEME.CrossVal<-function(Xtot,E,resE,nbtest=1,optordersample=NULL,optEquiPondTau="Global",optEquiPondVarPhi="Theme",exps=1,expl=1,updateProgress=NULL,myEps=10^(-6),OutputDir=NULL){
 ## ADD an help
 ## Initialisation
+## nbtest = nbre d'observations par groupes (nombre d'observations à mettre dans l'échantillon test à chaque itération)
 
   nbcomp<-resE$nbcomp
   nbcomptot<-sum(nbcomp)

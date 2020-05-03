@@ -1,6 +1,7 @@
 res2<<-NULL
 
 function(input, output, session) {
+  #optBW = 1 # Forcer à 1 à désactivé si au choix de l'utilisateur
   volumes = getVolumes()
   session$onSessionEnded(stopApp)
   param_yaml<-THEME:::.fun_Buildfolders(opt.build=FALSE)
@@ -36,13 +37,63 @@ function(input, output, session) {
   output$codeusers <- renderDataTable({Xdatacal()$dtcodeblocks})
 
 ## MODEL DESIGN Windows
+  reactivevalue<-reactive({
+    numSelectModDes <- ifelse(is.null(isolate(input$Blocks)),2,isolate(input$Blocks))
+    sapply(paste0("EQ1ModDes", seq_len(numSelectModDes)),function(x)input[[x]])
+    sapply(paste0("EQ2ModDes", seq_len(numSelectModDes)),function(x)input[[x]])
+    sapply(paste0("EQ3ModDes", seq_len(numSelectModDes)),function(x)input[[x]])
+    sapply(paste0("EQ4ModDes", seq_len(numSelectModDes)),function(x)input[[x]])
+    })
+
+  observeEvent(reactivevalue(),{
+    #browser()
+    numSelectModDes <- ifelse(is.null(isolate(input$Blocks)),2,isolate(input$Blocks))
+    uiEQ1ModDes<-sapply(paste0("EQ1ModDes", seq_len(numSelectModDes)),function(x)input[[x]])
+    uiEQ2ModDes<-sapply(paste0("EQ2ModDes", seq_len(numSelectModDes)),function(x)input[[x]])
+    uiEQ4ModDes<-sapply(paste0("EQ4ModDes", seq_len(numSelectModDes)),function(x)input[[x]])
+
+    Q3ModDes<-sapply(paste0("EQ3ModDes", seq_len(numSelectModDes)),function(x)input[[x]])
+    lapply(1:numSelectModDes, function(i) {
+        if(uiEQ1ModDes[i]=="Z"){updateSelectInput(session,paste0("EQModDesComp",i),choices=0,selected=0)}else{
+          updateSelectInput(session,paste0("EQModDesComp",i),choices=seq(1,10,by=1),selected=max(1,input[[paste0("EQModDesComp",i)]]))
+          } #)
+      })
+    if(!is.null(input$nEquations)){
+      if(input$nEquations>=2){
+        lapply(1:numSelectModDes, function(i) {
+          if(uiEQ1ModDes[i]!="Z"){
+            if(uiEQ2ModDes[i]=="Z"){updateSelectInput(session,paste0("EQModDesComp",i),choices=0,selected=0)}else{
+              updateSelectInput(session,paste0("EQModDesComp",i),choices=seq(1,10,by=1),selected=max(1,input[[paste0("EQModDesComp",i)]]))
+             }}
+          })
+        }
+      if(input$nEquations>=3){
+        lapply(1:numSelectModDes, function(i) {
+          if(uiEQ1ModDes[i]!="Z"&uiEQ2ModDes[i]!="Z"){
+          if(uiEQ3ModDes[i]=="Z"){updateSelectInput(session,paste0("EQModDesComp",i),choices=0,selected=0)}else{
+            updateSelectInput(session,paste0("EQModDesComp",i),choices=seq(1,10,by=1),selected=max(1,input[[paste0("EQModDesComp",i)]]))
+          }}
+          })
+        }
+      if(input$nEquations>=4){
+        lapply(1:numSelectModDes, function(i) {
+          if(uiEQ1ModDes[i]!="Z"&uiEQ2ModDes[i]!="Z"&uiEQ3ModDes[i]!="Z"){
+            if(uiEQ4ModDes[i]=="Z"){updateSelectInput(session,paste0("EQModDesComp",i),choices=0,selected=0)}else{
+              updateSelectInput(session,paste0("EQModDesComp",i),choices=seq(1,10,by=1),selected=max(1,input[[paste0("EQModDesComp",i)]]))
+            }}
+        })
+        }
+      }
+    })
+
    observeEvent({input$Blocks
      input$nEquations},{
+
       if(!is.null(input$Blocks)){
      output$SelectModDes1=renderUI({
         numSelectModDes<-input$Blocks
         lapply(1:numSelectModDes, function(i) {
-          selectInput(paste0("EQ1ModDes",i),h5(paste0("Block",i)),c(" ","X","T","Y"),width="120px")  #)
+          selectInput(paste0("EQ1ModDes",i),h5(paste0("Block",i)),c(" ","X","Z","Y"),width="120px")  #)
           })
         })
      output$SelectModDesComp=renderUI({
@@ -65,7 +116,7 @@ function(input, output, session) {
       output$SelectModDes2=renderUI({
         numSelectModDes<-input$Blocks
         lapply(1:numSelectModDes, function(i) {
-          selectInput(paste0("EQ2ModDes",i),h5(paste0("Block",i)),c(" ","X","T","Y"),width="120px")
+          selectInput(paste0("EQ2ModDes",i),h5(paste0("Block",i)),c(" ","X","Z","Y"),width="120px")
           })
       })
     }
@@ -76,7 +127,7 @@ function(input, output, session) {
       output$SelectModDes3=renderUI({
       numSelectModDes<-input$Blocks
       lapply(1:numSelectModDes, function(i) {
-        selectInput(paste0("EQ3ModDes",i),h5(paste0("Block",i)),c(" ","X","T","Y"),width="120px")
+        selectInput(paste0("EQ3ModDes",i),h5(paste0("Block",i)),c(" ","X","Z","Y"),width="120px")
         })
       })
     }
@@ -84,7 +135,7 @@ function(input, output, session) {
       output$SelectModDes4=renderUI({
       numSelectModDes<-input$Blocks
       lapply(1:numSelectModDes, function(i) {
-        selectInput(paste0("EQ4ModDes",i),h5(paste0("Block",i)),c(" ","X","T","Y"),width="120px")
+        selectInput(paste0("EQ4ModDes",i),h5(paste0("Block",i)),c(" ","X","Z","Y"),width="120px")
         })
       })
     }
@@ -129,17 +180,21 @@ function(input, output, session) {
      selectInput("SelectBlock1","Thematic Block contents:",paste0("B",1:input$Blocks)) #)
      })
 
-   observeEvent(input$Blocks,{
-     updateSelectInput(session,"SelectBlocksconfig1", selected = "None")
-     })
+   #observeEvent(input$Blocks,{
+   #  updateSelectInput(session,"SelectBlocksconfig1", selected = "None")
+   #   })
 
    observeEvent(input$SelectBlocksconfig1,{
     if((input$SelectBlocksconfig1!="None")){
       Oldvalue<-input$SelectBlocksconfig1
-      listnamesblocks<-lapply(1:input$Blocks,function(i)colnames(Xdatacal()$dt)[Xdatacal()$dtcodeblocks[paste0("VBA_",input$SelectBlocksconfig1),]%in%i])
-      names(listnamesblocks)<-paste0("B",1:input$Blocks)
+     # browser()
+      nblocks<-sum(unique(as.numeric(Xdatacal()$dtcodeblocks[paste0("VBA_",input$SelectBlocksconfig1),]))!=0)
+      updateSelectInput(session,"Blocks","Number of Thematic Blocks: ",choice=c(2:15),selected=nblocks)
+      listnamesblocks<-lapply(1:nblocks,function(i)colnames(Xdatacal()$dt)[Xdatacal()$dtcodeblocks[paste0("VBA_",input$SelectBlocksconfig1),]%in%i])
+      names(listnamesblocks)<-paste0("B",1:nblocks)
       listnamesblocks<<-listnamesblocks
-      for(k in paste0("B",1:input$Blocks)){
+
+      for(k in paste0("B",1:nblocks)){
         output$VarSel=renderUI({
           if(is.null(Xdatacal()$dt)){
              mylisnamedispo<-NULL}else{
@@ -200,6 +255,7 @@ function(input, output, session) {
    observeEvent(input$goButton, {
 
     listnamesblocksRe()
+
     res<-THEME:::.fun.listXE(Xdatacal()$dt,listnamesblocks,State(),input$nEquations,as.numeric(NBcomp()))
 
     if(res$LogComp=="Ok"){
@@ -220,8 +276,17 @@ function(input, output, session) {
       s<-as.numeric(input$opts)
       if(s==0){s=0.001} #TEMP SEE XB
       l<-as.numeric(input$optl)
-      cvvChoice<-as.numeric(input$optCV)
-      bwopondChoice<-as.numeric(input$optBW)
+      #cvvChoice<-as.numeric(input$optCV)
+
+      cvvChoice<-as.numeric(substr(input$optCV,1,nchar(input$optCV)-1))
+      if(cvvChoice==0){
+        cvvChoice<-NA
+        }else{
+          nr<-nrow(Xlist[[1]])
+          cvvChoice<-trunc(nr*cvvChoice/100)+1
+          }
+
+      if(input$optBW=="YES"){bwopondChoice<-1}else{bwopondChoice<-NA} #as.numeric(input$optBW)
 
       updateProgress <- function(value = NULL, detail = NULL) {
         if (is.null(value)) {
@@ -245,6 +310,12 @@ function(input, output, session) {
       Xtot<<-resTHEME$Xtot
       Ftot<<-resTHEME$Flist
       P<<-resTHEME$P
+      sendSweetAlert(
+        session = session,
+        title = "Completed!",
+        text = "",
+        type = "success"
+        )
       optplot<<-TRUE
       }else{
         showNotification("Please check the design",closeButton = TRUE,type="error") #cat("Please check the design\n")
@@ -447,7 +518,7 @@ function(input, output, session) {
 
      if (length(allmodels)==0){return(NULL)}
      if (input$optCV=="NA"){return(NULL)}
-     if (input$optBW=="NA"){return(NULL)}
+     if (input$optBW=="No"){return(NULL)}
 
      par.design<-THEME:::.fun.readparamyaml(allmodels[1],nameModel=NULL)
      nbeqmodel<-par.design$nbEq
@@ -474,7 +545,7 @@ function(input, output, session) {
        allmodels<-list.files(OutputDir,pattern=param_yaml$nam_subfolder,full.names =TRUE)
        if (length(allmodels)==0){return(NULL)}
        if (input$optCV=="NA"){return(NULL)}
-       if (input$optBW=="NA"){return(NULL)}
+       if (input$optBW=="No"){return(NULL)}
        fun.plotModsel()
 
      },height = function() {

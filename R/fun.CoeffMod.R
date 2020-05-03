@@ -17,6 +17,7 @@
         }
 
   for(i in 1:NbEq){
+
     myY<-resE$rEq[[i]][1]
     myX<-resE$rEq[[i]][-1]
     Freg<-data.frame(Reduce(cbind,Ftot[myX]))
@@ -58,14 +59,17 @@
         			  }else{Coeffr<-(1/Xtotsd[[r]])%*%Br}
         			Cstelist[[i]][[r]]<-Cster
         			Coefflist[[i]][[r]]<-Coeffr
-              myselectcoeff<-rep(myX,nbcomp[myX])
-              }
 
-      Coeffinlisttemp<-Coefflist[[i]][[r]]%*%rescoeff[[i]][c(FALSE,myselectcoeff==r),]
+           }
+      myselectcoeff<-rep(myX,nbcomp[myX])
+
+      tmp_coeffsel<-rescoeff[[i]][c(FALSE,myselectcoeff==r),]
+      #tmp_coeffsel[is.na(tmp_coeffsel)]<-0  ## SI multicolinearité dans les covariables!
+      Coeffinlisttemp<-Coefflist[[i]][[r]]%*%tmp_coeffsel
       colnames(Coeffinlisttemp)<-colnames(rescoeff[[i]])
       rownames(Coeffinlisttemp)<-colnames(Xtot[[r]])
       Coeffinlist[[i]][[r]]<-Coeffinlisttemp
-      Cstinlisttp<-Cstinlisttp+Cstelist[[i]][[r]]%*%rescoeff[[i]][c(FALSE,myselectcoeff==r),]
+      Cstinlisttp<-Cstinlisttp+Cstelist[[i]][[r]]%*%tmp_coeffsel
       Cstinlisttemp<-Cstinlisttp+matrix(rescoeff[[i]][1,],ncol=ncol(Cstinlisttp),nrow=nrow(Cstinlisttp),byrow=TRUE)
       Cstinlist[[i]]<-matrix(Cstinlisttemp[1,],ncol=1)
       rownames(Cstinlist[[i]])<-colnames(rescoeff[[i]])

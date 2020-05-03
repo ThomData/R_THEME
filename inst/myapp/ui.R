@@ -1,13 +1,14 @@
 library(shiny)
-library("stringr")
+library(stringr)
 library(ggplot2)
-library("ggrepel")
+library(ggrepel)
 library(dplyr)
 library(tidyr)
-#library(plotly)
 library(shinyFiles)
 library(gridExtra)
 library(DT)
+library(shinyWidgets)
+
 appCSS <-
  "#color ~ .selectize-control.single .selectize-dropdown [data-value=X] { color: blue }
   #color ~ .selectize-control.single .selectize-dropdown [data-value=YES] { color: red }"
@@ -50,11 +51,15 @@ fluidPage(#theme = "bootstrap.css",
 
       tags$hr(style="border-color: grey;"),
 
+      #selectInput("optCV","Cross-validation: ",
+      #            c(NA,1:20)),
+
       selectInput("optCV","Cross-validation: ",
-                  c(NA,1:20)),
+                  paste0(seq(0,50,5),"%")),
 
       selectInput("optBW","Backward Selection: ",
-                  c(NA,seq(0,1,by=.1)),selected="NO"),
+                  c("YES","NO"),selected="NO"),
+      #            c(NA,seq(0,1,by=.1)),selected="NO"),
       tags$hr(style="border-color: grey;"),
       tags$span(style="color:black",strong("Tuning parameters")),
       selectInput("opts","s: ",
@@ -118,8 +123,8 @@ fluidPage(#theme = "bootstrap.css",
                   ),
                   tabPanel("Variable selection",value=1,icon = icon("cogs"),
                            fluidPage(
-                             uiOutput("BlocksNB"),
                              uiOutput("SelectBlocksconfig"),
+                             uiOutput("BlocksNB"),
                              uiOutput("SelectBlock"),
                              uiOutput("VarSel")
                              )
@@ -134,7 +139,7 @@ fluidPage(#theme = "bootstrap.css",
                                   uiOutput("SelectModDesComp")
                            ),
                            column(2,
-                                  tags$div(class = "h5", id = NULL,NULL,strong("Roles of Thematic Blocks")),
+                                  tags$div(class = "h5", id = NULL,NULL,strong("Blocks' roles")), #Roles of Thematic Blocks
                                   tags$div(class = "h5", id = NULL,NULL,strong("Eq. 1")),
                                   uiOutput("SelectModDes1")
                                   ),

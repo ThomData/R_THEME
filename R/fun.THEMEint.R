@@ -1,5 +1,6 @@
-.fun.THEMEint<-function(Xtot,Ctot,E,resE,W,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme",myEps=10^(-6)){
+.fun.THEMEint<-function(Xtot,Ctot,E,resE,W,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme",myEps=10^(-6),OutputDir=NULL){
   nbcomp<-resE$nbcomp
+
   res<-THEME:::.fun.initialisation(Ctot,W,E,nbcomp=nbcomp,Einfo=NULL)
   Ftot<-res$F
   Ttot<-res$T
@@ -14,40 +15,21 @@
   mylimit<-1-10^-5
   repeat{
     aaarepeat<-aaarepeat+1
+    #cat(aaarepeat,"...")
     Ftotold<-Ftot
     for(myr in resE$rF){
       for(compk in 1:nbcomp[myr]){
-        res<-THEME:::.fun.maxcrit(Ftot,Ttot,r=myr,E,Ctot=Ctot,Xr=Xtot[[myr]],Wr=W,compk=compk,nbcomp=nbcomp,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,epsconv=myEps)
+        res<-THEME:::.fun.maxcrit(Ftot,Ttot,r=myr,E,Ctot=Ctot,Xr=Xtot[[myr]],Wr=W,compk=compk,nbcomp=nbcomp,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,epsconv=myEps,OutputDir=OutputDir)
         Ttotnew<-res$Ttot
         Ftotnew<-res$Ftot
         Ttot<-Ttotnew
         Ftot<-Ftotnew
+        mycrit=res$mycrit
         }
       }
 
-    mincor<-min(unlist(sapply(resE$rF,function(i)diag(abs(cor(Ftot[[i]],Ftotold[[i]]))))))
-    oldw <- getOption("warn")
-    options(warn = -1)
-    meancorspace<-unlist(sapply(resE$rF,function(i)
-      sapply(1:ncol(Ftot[[i]]),function(j)
-          if(ncol(Ftot[[i]])==1){summary(lm(Ftot[[i]]~.,data = data.frame(Ftotold[[i]])))$r.squared
-          }else{summary(lm(Ftot[[i]]~.,data = data.frame(Ftotold[[i]])))[[j]]$r.squared}
-          )
-      ))
-    options(warn = oldw)
-
-    meancorspace<-mean(meancorspace,na.rm=TRUE)
-    if(mincor>maxcor){maxcor<-mincor}
-    if(mincor>mylimit){
-      #if(aaarepeat>=30){cat("n iteration higher than",aaarepeat)}
-      #cat("CONVvector. FTOT =",mincor,"\n")
-      #cat("CONVspace. ",aaarepeat," FTOT =",meancorspace,"\n")
-      break}
-    if(aaarepeat>=5){if(meancorspace>.999){break}}
-    if(aaarepeat==30){mylimit<-.99*maxcor} #*maxcor
-    if(aaarepeat>=100){
-        warningconv<-"PB"
-        break}
+    optionbreak<-THEME:::.fun.convergence(resE,Ftot,Ftotold,aaarepeat,mycrit)$optionbreak
+    if(optionbreak){break}
     }
   LogFileConv<-"Non Activated"
   return(list(Ftot=Ftot,Ttot=Ttot,LogFileConv=LogFileConv,resE=resE,E=E))
