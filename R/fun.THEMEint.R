@@ -12,18 +12,20 @@
 
   aaarepeat<-0
   maxcor<-0
-  mylimit<-1-10^-5
+  #mylimit<-1-10^-5
   repeat{
     aaarepeat<-aaarepeat+1
     #cat(aaarepeat,"...")
     Ftotold<-Ftot
     for(myr in resE$rF){
       for(compk in 1:nbcomp[myr]){
-        res<-THEME:::.fun.maxcrit(Ftot,Ttot,r=myr,E,Ctot=Ctot,Xr=Xtot[[myr]],Wr=W,compk=compk,nbcomp=nbcomp,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,epsconv=myEps,OutputDir=OutputDir)
-        Ttotnew<-res$Ttot
-        Ftotnew<-res$Ftot
-        Ttot<-Ttotnew
-        Ftot<-Ftotnew
+        #print(system.time(
+          res<-THEME:::.fun.maxcrit(Ftot,Ttot,r=myr,E,Ctot=Ctot,Xr=Xtot[[myr]],Wr=W,compk=compk,nbcomp=nbcomp,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,epsconv=myEps,OutputDir=OutputDir)
+        #  ))
+        #Ttotnew<-res$Ttot
+        #Ftotnew<-res$Ftot
+        Ttot<-res$Ttot
+        Ftot<-res$Ftot
         mycrit=res$mycrit
         }
       }

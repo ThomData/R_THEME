@@ -9,6 +9,7 @@ library(gridExtra)
 library(DT)
 library(shinyWidgets)
 
+#browser()
 appCSS <-
  "#color ~ .selectize-control.single .selectize-dropdown [data-value=X] { color: blue }
   #color ~ .selectize-control.single .selectize-dropdown [data-value=YES] { color: red }"
@@ -78,6 +79,8 @@ fluidPage(#theme = "bootstrap.css",
       ##Action
       selectInput("calcoption","Calculation Option: ",
                   c("Robust","Balance","Fast")),
+      selectInput("boostmode","Parallel computation: ",
+                  c("No","Yes")),
       actionButton("goButton", "Go!",icon = icon("rocket"))
       #br()
       ),
@@ -117,8 +120,8 @@ fluidPage(#theme = "bootstrap.css",
       tabsetPanel(type = "tabs",
                   tabPanel("Data View",value=1,icon = icon("eye"),
                            fluidPage(
-                           dataTableOutput("datausers"),
-                           dataTableOutput("codeusers")
+                             DT::dataTableOutput("datausers"),
+                             DT::dataTableOutput("codeusers")
                            )
                   ),
                   tabPanel("Variable selection",value=1,icon = icon("cogs"),

@@ -33,8 +33,8 @@ function(input, output, session) {
     Xdataval<-res$dt
     })
 
-  output$datausers <- renderDataTable({Xdatacal()$dt})
-  output$codeusers <- renderDataTable({Xdatacal()$dtcodeblocks})
+  output$datausers <- DT::renderDataTable({Xdatacal()$dt})
+  output$codeusers <- DT::renderDataTable({Xdatacal()$dtcodeblocks})
 
 ## MODEL DESIGN Windows
   reactivevalue<-reactive({
@@ -187,7 +187,7 @@ function(input, output, session) {
    observeEvent(input$SelectBlocksconfig1,{
     if((input$SelectBlocksconfig1!="None")){
       Oldvalue<-input$SelectBlocksconfig1
-     # browser()
+      #browser()
       nblocks<-sum(unique(as.numeric(Xdatacal()$dtcodeblocks[paste0("VBA_",input$SelectBlocksconfig1),]))!=0)
       updateSelectInput(session,"Blocks","Number of Thematic Blocks: ",choice=c(2:15),selected=nblocks)
       listnamesblocks<-lapply(1:nblocks,function(i)colnames(Xdatacal()$dt)[Xdatacal()$dtcodeblocks[paste0("VBA_",input$SelectBlocksconfig1),]%in%i])
@@ -255,7 +255,7 @@ function(input, output, session) {
    observeEvent(input$goButton, {
 
     listnamesblocksRe()
-
+   # print(system.time(
     res<-THEME:::.fun.listXE(Xdatacal()$dt,listnamesblocks,State(),input$nEquations,as.numeric(NBcomp()))
 
     if(res$LogComp=="Ok"){
@@ -304,9 +304,11 @@ function(input, output, session) {
       if(input$calcoption=="Robust"){myEps=10^(-6)}
       if(input$calcoption=="Balance"){myEps=10^(-4)}
       if(input$calcoption=="Fast"){myEps=10^(-2)}
-
-      resTHEME<-THEME(Xlist,Xnew=NULL,E,nbcomp,s=s,l=l,OutputDir=OutputDir,cvvChoice=cvvChoice,bwopondChoice=bwopondChoice,updateProgress=updateProgress,myEps=myEps)
-
+      optparallel<-FALSE
+      if(input$boostmode=="Yes"){optparallel<-TRUE}
+      print(system.time(
+      resTHEME<-THEME(Xlist,Xnew=NULL,E,nbcomp,s=s,l=l,OutputDir=OutputDir,cvvChoice=cvvChoice,bwopondChoice=bwopondChoice,updateProgress=updateProgress,myEps=myEps,optparallel=optparallel)
+      ))
       Xtot<<-resTHEME$Xtot
       Ftot<<-resTHEME$Flist
       P<<-resTHEME$P
@@ -320,6 +322,7 @@ function(input, output, session) {
       }else{
         showNotification("Please check the design",closeButton = TRUE,type="error") #cat("Please check the design\n")
         }
+      #))
       })
 
 

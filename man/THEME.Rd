@@ -4,9 +4,20 @@
 \alias{THEME}
 \title{THEME}
 \usage{
-THEME(Xlist, Xnew = NULL, E, nbcomp, s = 0.5, l = 1,
-  OutputDir = NULL, cvvChoice = NA, bwopondChoice = NA,
-  updateProgress = NULL, myEps = 10^(-6))
+THEME(
+  Xlist,
+  Xnew = NULL,
+  E,
+  nbcomp,
+  s = 0.5,
+  l = 1,
+  OutputDir = NULL,
+  cvvChoice = NA,
+  bwopondChoice = NA,
+  updateProgress = NULL,
+  myEps = 10^(-6),
+  optparallel = FALSE
+)
 }
 \arguments{
 \item{Xlist}{List of R matrix thematic blocks of the thematic model used for calibration.}

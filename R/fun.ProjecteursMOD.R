@@ -19,7 +19,8 @@
 .fun.Norm<-function(x,M=1){
 	nc<-length(x)
 	if(!is.matrix(M)){M<-diag(1,nc)}
-  Normeucl<-as.numeric(sqrt(t(x)%*%M%*%x))
+  #Normeucl<-as.numeric(sqrt(t(x)%*%M%*%x))
+  Normeucl<-as.numeric(sqrt(crossprod(x,M)%*%x))
   Normeucl.inv<-1/Normeucl
 	x<-x*Normeucl.inv
 	return(list(x=x,Normeucl=Normeucl,Normeucl.inv=Normeucl.inv))
@@ -85,7 +86,8 @@
   Aeigen<-THEME:::.fun.eigen_non_null(A,optoptim=TRUE,myseuil=10^(-4))
   L<-Aeigen$Lambda
   if(a<0){a<- -a;L<-solve(L)}
-  Aa<-Aeigen$U%*%(L)^a%*%t(Aeigen$U)
+  #Aa<-Aeigen$U%*%(L)^a%*%t(Aeigen$U)
+  Aa<-tcrossprod(Aeigen$U%*%(L)^a,Aeigen$U)
   return(list(Aa=Aa))
   }
 
@@ -163,27 +165,27 @@
 #####################################
 ### Compute rns, rF, rcov R from object E
 .fun.rvect<-function(E,nbcomp=NULL){
- Esumcol<-apply(E,2,sum)
- Rtot<-ncol(E)/2
- R<-sum((Esumcol[1:Rtot]+Esumcol[(Rtot+1):ncol(E)])>0)
- rns<-c(1:Rtot)[(Esumcol[1:Rtot]+Esumcol[(Rtot+1):ncol(E)])==0]
- Esscov<-E*(E!=2)
- Esumcol<-apply(Esscov,2,sum)
- Rtot<-ncol(E)/2
- R<-sum((Esumcol[1:Rtot]+Esumcol[(Rtot+1):ncol(E)])>0)
- Esscov<-E*(E!=2)
- Esumcol<-apply(Esscov,2,sum)
- rF<-c(1:Rtot)[(Esumcol[1:Rtot]+Esumcol[(Rtot+1):ncol(E)])>0]
- rcov<-c(1:Rtot)[apply((E[,(Rtot+1):ncol(E),drop=FALSE]==2),2,sum)!=0]
+   Esumcol<-apply(E,2,sum)
+   Rtot<-ncol(E)/2
+   R<-sum((Esumcol[1:Rtot]+Esumcol[(Rtot+1):ncol(E)])>0)
+   rns<-c(1:Rtot)[(Esumcol[1:Rtot]+Esumcol[(Rtot+1):ncol(E)])==0]
+   Esscov<-E*(E!=2)
+   Esumcol<-apply(Esscov,2,sum)
+   Rtot<-ncol(E)/2
+   R<-sum((Esumcol[1:Rtot]+Esumcol[(Rtot+1):ncol(E)])>0)
+   Esscov<-E*(E!=2)
+   Esumcol<-apply(Esscov,2,sum)
+   rF<-c(1:Rtot)[(Esumcol[1:Rtot]+Esumcol[(Rtot+1):ncol(E)])>0]
+   rcov<-c(1:Rtot)[apply((E[,(Rtot+1):ncol(E),drop=FALSE]==2),2,sum)!=0]
 
- if(length(c(rcov,rF,rns))==length(1:(ncol(E)/2))){
-   if(sum((c(rcov,rF,rns)%in%c(1:(ncol(E)/2)))==FALSE)==0){}
-   }else{print("test= Invalide")}
- if(is.null(nbcomp)==FALSE){nbcomp[!c(1:(ncol(E)/2))%in%rF]<-0}
- rEq<-vector("list")
- for(Eq in 1:nrow(E)){rEq[[Eq]]<-c(1:Rtot,1:Rtot)[E[Eq,]!=0]}
+   if(length(c(rcov,rF,rns))==length(1:(ncol(E)/2))){
+     if(sum((c(rcov,rF,rns)%in%c(1:(ncol(E)/2)))==FALSE)==0){}
+     }else{print("test= Invalide")}
+   if(is.null(nbcomp)==FALSE){nbcomp[!c(1:(ncol(E)/2))%in%rF]<-0}
+   rEq<-vector("list")
+   for(Eq in 1:nrow(E)){rEq[[Eq]]<-c(1:Rtot,1:Rtot)[E[Eq,]!=0]}
 
- return(list(R=R,Rtot=Rtot,rns=rns,rF=rF,rcov=rcov,nbcomp=nbcomp,rEq=rEq))
+   return(list(R=R,Rtot=Rtot,rns=rns,rF=rF,rcov=rcov,nbcomp=nbcomp,rEq=rEq))
  }
 
 #####################################
@@ -347,7 +349,8 @@
         }else{
           Atilde<-A#t(Cr)%*%W
           }
-      AAtilde<-Atilde%*%t(Atilde)
+      #AAtilde<-Atilde%*%t(Atilde)
+      AAtilde<-tcrossprod(Atilde)
       tnew<-THEME:::.fun.eigen_non_null(AAtilde,J=1,optoptim=FALSE)$U
       MM<-CrW%*%Cr
       tnew<-THEME:::.fun.Norm(tnew,M=MM)$x
@@ -363,23 +366,20 @@
 
 #####################################
 ## Function: Gamma criteria maximisation
+
 .fun.maxcrit<-function(Ftot,Ttot,r,E,Ctot,Xr,Wr,compk,nbcomp,s=.5,l=1,optEquiPondTau="Global",optEquiPondVarPhi="Theme",epsconv=10^(-6),OutputDir=NULL){
   listfolders<-THEME:::.fun_Buildfolders(OutputDir,nameModel=NULL,opt.build=TRUE)$list_mainfolders
   tcur<-Ttot[[r]][,compk]
   Cr<-Ctot[[r]]
   myxichi<-THEME:::.fun.xichi(E,nbcomp,s=s,optEquiPondTau,optEquiPondVarPhi)
-
   mycritcur<- -100000
   kkk<-0
-  #vectmycritnew<-NULL
-  #critconv<-NULL
+
   repeat{
    kkk<-kkk+1
-
    rescrit<-THEME:::.fun.crit(Xr,Ftot,Ctot,Ttot,E,r,compk,Einfo=NULL,Wr,myxichi,s=s,l=l)
-
    mycritnew<-rescrit$mycrit
-   #vectmycritnew<-c(vectmycritnew,mycritnew)
+
 
    tnew<-rescrit$tnew
    CritNablagamma<-rescrit$CritNablagamma
@@ -399,8 +399,6 @@
         k<-0
         tcand<-tnew
         repeat{
-          #vectmycritnew<-c(vectmycritnew,mycritnew2)
-          #critconv<-c(critconv,sum((tnew-tcur)^2))
           if(mycritnew2>=mycritnew){
             mycritcur<-mycritnew2
             break}
@@ -415,23 +413,18 @@
 
         tnew<-as.numeric(sign(crossprod(tnew,tcand)))*tcand
         }
+
       tnew<-as.numeric(sign(crossprod(tcur,tnew)))*tnew
 
       Ttot[[r]][,compk]<-tnew
       Ftot[[r]][,compk]<-Cr%*%tnew
-      #critconv<-c(critconv,sum((tnew-tcur)^2))
-      #print(vectmycritnew)
       epsconv<-min(10^(-4),epsconv)
       if(kkk>1){
-        if(sqrt(sum((mycritnew-mycritcur)^2))<epsconv){
-          #write.csv2(vectmycritnew,file=file.path(OutputDir,listfolders[2],"critconv.csv"))
-          #write.csv2(critconv,file=file.path(OutputDir,listfolders[2],"crittconv.csv"))
-          break}else{mycritcur<-mycritnew}
-        }else{mycritcur<-mycritnew}
-      if(sum((tnew-tcur)^2)<epsconv){
-        #write.csv2(critconv,file=file.path(OutputDir,listfolders[2],"crittconv.csv"))
-        #write.csv2(vectmycritnew,file=file.path(OutputDir,listfolders[2],"critconv.csv"))
-        break}else{tcur<-tnew}
+        if(sqrt(sum((mycritnew-mycritcur)^2))<epsconv){break}#else{mycritcur<-mycritnew}
+        }#else{mycritcur<-mycritnew}
+      mycritcur<-mycritnew
+      if(sqrt(sum((tnew-tcur)^2))<epsconv){break}#else{tcur<-tnew}
+      tcur<-tnew
       }
 
   return(list(tnew=tnew,Ttot=Ttot,Ftot=Ftot,mycritnew=mycritnew))

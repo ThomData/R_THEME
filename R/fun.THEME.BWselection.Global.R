@@ -25,12 +25,12 @@
 	delta<-rep(NA,nbgroup)
 	logSr<-rep(NA,nbgroup)
 	pond<-rep(NA,nbgroup)
-	MlogTrD<-vector("list",nbgroup)
-	MlogTrP<-vector("list",nbgroup)
-	MlogTmrD<-vector("list",nbgroup)
-	MlogTmrP<-vector("list",nbgroup)
-	MatlogTrD<-matrix(NA,ncol=2,nrow=nbgroup)
-	MatlogTrP<-matrix(NA,ncol=2,nrow=nbgroup)
+	#MlogTrD<-vector("list",nbgroup)
+	#MlogTrP<-vector("list",nbgroup)
+	#MlogTmrD<-vector("list",nbgroup)
+	#MlogTmrP<-vector("list",nbgroup)
+	#MatlogTrD<-matrix(NA,ncol=2,nrow=nbgroup)
+	#MatlogTrP<-matrix(NA,ncol=2,nrow=nbgroup)
 
 	for(r in SelectGroup){
 	  nbcomp<-resE$nbcomp
@@ -82,16 +82,18 @@
 
 			deltavr<-1/(eDvr+ePvr)*(sumln.Pvr+sumln.Dvr)
 			pond[r]<-1/(eDvr+ePvr)
-			MlogTrP[[r]]<-cbind(logTrP,logTmrP)
-  		sttemp<-c(logTrP,logTmrP)
-			if(is.null(sttemp)){sttemp<-c(NA,NA)}
-			MatlogTrP[r,]<-sttemp
-			MlogTmrP[[r]]<-logTmrP
-			MlogTrD[[r]]<-cbind(logTrD,logTmrD)
-			sttemp<-c(logTrD,logTmrD)
-			if(is.null(sttemp)){sttemp<-c(NA,NA)}
-			MatlogTrD[r,]<-sttemp
-			MlogTmrD[[r]]<-logTmrD
+		 #MlogTrP[[r]]<-cbind(logTrP,logTmrP)
+  		#sttemp<-c(logTrP,logTmrP)
+			#if(is.null(sttemp)){sttemp<-c(NA,NA)}
+			#MatlogTrP[r,]<-sttemp
+			#MlogTmrP[[r]]<-logTmrP
+			#MlogTrD[[r]]<-cbind(logTrD,logTmrD)
+
+			#sttemp<-c(logTrD,logTmrD)
+			#if(is.null(sttemp)){sttemp<-c(NA,NA)}
+			#browser()
+			#MatlogTrD[r,]<-sttemp
+			#MlogTmrD[[r]]<-logTmrD
 
 			if(eDvr==0){gamma[r]<-NA}
 			if(eDvr>0){

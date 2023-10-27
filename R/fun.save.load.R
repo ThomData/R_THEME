@@ -102,9 +102,9 @@
 ##########################
 ## save THEME Cross Val function
 ## functionsaveTHEMECV
-.sav.THEMECrossVal<-function(resTHEMECV,OutputDir=NULL){
+.sav.THEMECrossVal<-function(resE,resCV,Ypredtot,R2CV,OutputDir=NULL){
   if(!is.null(OutputDir)){
-    resE<-resTHEMECV$resE
+    #resE<-resTHEMECV$resE
     nbcomp<-resE$nbcomp
     if(!is.null(resE$rcov)){nbcomp[resE$rcov]<-"cov"}
     vers<-paste(nbcomp,collapse="_")
@@ -117,17 +117,18 @@
     dir.create(file.path(OutputDir,nameModel),showWarnings = FALSE)
     param_yaml<-THEME:::.fun_Buildfolders(OutputDir,nameModel=nameModel,opt.build=TRUE)
 
-    resCV<-resTHEMECV$resCV
-    R2CV<-resTHEMECV$R2CV
-    Ypredtot<-resTHEMECV$Ypredtot
+    #resCV<-resTHEMECV$resCV
+    #R2CV<-resTHEMECV$R2CV
+    #Ypredtot<-resTHEMECV$Ypredtot
 
-    namesY<-THEME:::.fun.writeorreadyaml()
-
+    #namesY<-THEME:::.fun.writeorreadyaml()
+    #browser()
     for(i in 1:length(resE$rEq)){
+      namesY<-colnames(Ypredtot[[i]])
       Ypredtoti<-data.frame("obs"=rownames(Ypredtot[[i]]),as.data.frame(Ypredtot[[i]]))
       write.csv2(Ypredtoti,file=paste(OutputDir,"/",nameModel,"/",param_yaml$list_subfolder[["8"]],"/CV_Ypred_","Eq",i,".csv",sep=""),row.names=FALSE)
-      R2CVi<-data.frame("code"=namesY$saveparam_yaml$names.col,"R2cv"=as.vector(R2CV[[i]]))
-      resCVi<-data.frame("code"=namesY$saveparam_yaml$names.col,"RMSECV"=as.vector(resCV[[i]]))
+      R2CVi<-data.frame("code"=namesY,"R2cv"=as.vector(R2CV[[i]])) #namesY$saveparam_yaml$names.col
+      resCVi<-data.frame("code"=namesY,"RMSECV"=as.vector(resCV[[i]])) #namesY$saveparam_yaml$names.col
       write.csv2(resCVi,file=paste0(OutputDir,"/",nameModel,"/",param_yaml$list_subfolder[["8"]],"/CV_Eq",i,".csv"),row.names=FALSE)
       write.csv2(R2CVi,file=paste0(OutputDir,"/",nameModel,"/",param_yaml$list_subfolder[["8"]],"/CV_R2_Eq",i,".csv"),row.names=FALSE)
     }

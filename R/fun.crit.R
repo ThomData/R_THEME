@@ -26,21 +26,27 @@
     Psi.de.texp<-sapply(1:ncol(Fdq),function(j){
       A<-ABexp[[j]]$A
       B<-ABexp[[j]]$B
-      tAt<-as.numeric(t(tcur)%*%A%*%tcur)
-      tBt<-as.numeric(t(tcur)%*%B%*%tcur)
+      tAt<-as.numeric(crossprod(tcur,A)%*%tcur)
+      tBt<-as.numeric(crossprod(tcur,B)%*%tcur)
+      #tAt<-as.numeric(t(tcur)%*%A%*%tcur)
+      #tBt<-as.numeric(t(tcur)%*%B%*%tcur)
       log(tAt/tBt)})
     Psi.de.tdq<-Psi.de.tdq+xir*sum(unlist(Psi.de.texp)) #Avant 11/03/2020 Psi.de.tdp+xir*sum(unlist(Psi.de.texp))
 
     Atilde_p2tp<-lapply(1:ncol(Fdq),function(j){
       A<-ABexp[[j]]$A
-      tAt<-as.numeric(t(tcur)%*%A%*%tcur)
+      #tAt<-as.numeric(t(tcur)%*%A%*%tcur)
+      tAt<-as.numeric(crossprod(tcur,A)%*%tcur)
       Atilde<-(1/tAt)*A})
+
     sumAtilde_p2<-sumAtilde_p2+xir*Reduce("+",Atilde_p2tp)
 
     Btilde_p2tp<-lapply(1:ncol(Fdq),function(j){
       B<-ABexp[[j]]$B
-      tBt<-as.numeric(t(tcur)%*%B%*%tcur)
+      #tBt<-as.numeric(t(tcur)%*%B%*%tcur)
+      tBt<-as.numeric(crossprod(tcur,B)%*%tcur)
       Btilde<-(1/tBt)*B})
+
     sumBtilde_p2<-sumBtilde_p2+xir*Reduce("+",Btilde_p2tp)
 
     deltaPsi_pq<-lapply(1:ncol(Fdq),function(j){2*(Atilde_p2tp[[j]]-Btilde_p2tp[[j]])%*%tcur})
@@ -51,8 +57,10 @@
     ABdep<-THEME:::.fun.AB_R2dep(Cr,Wr,Hmr)
     A<-ABdep$A
     B<-ABdep$B
-    tAt<-as.numeric(t(tcur)%*%A%*%tcur)
-    tBt<-as.numeric(t(tcur)%*%B%*%tcur)
+    tAt<-as.numeric(crossprod(tcur,A)%*%tcur)
+    tBt<-as.numeric(crossprod(tcur,B)%*%tcur)
+    #tAt<-as.numeric(t(tcur)%*%A%*%tcur)
+    #tBt<-as.numeric(t(tcur)%*%B%*%tcur)
     Atilde<-(1/tAt)*A
     Btilde<-(1/tBt)*B
     xir<-myxichi$xi[r]
@@ -77,14 +85,17 @@
     phi.de.t<-0
 
 ### HERE to continue diag
-    XrWr<-crossprod(Xr,Wr)
-    XrWrXr<-as.numeric(1/colSums(t(XrWr) * Xr))
+    #XrWr<-crossprod(Xr,Wr)
+    #XrWrXr<-as.numeric(1/colSums(t(XrWr) * Xr))
+    XrWr<-crossprod(Wr,Xr)
+    XrWrXr<-as.numeric(1/colSums(XrWr * Xr)) ## CF XAVIER 2020
     CrWr<-crossprod(Cr,Wr)
 
     num<-sapply(1:J,function(j){
       CrWrXrj<-CrWr%*%Xr[,j]
       Nj<-XrWrXr[j]*tcrossprod(CrWrXrj)
-      t(tcur)%*%Nj%*%tcur
+      #t(tcur)%*%Nj%*%tcur
+      crossprod(tcur,Nj)%*%tcur
       })
 
     Ntilde_numerator<-lapply(1:J,function(j){
@@ -97,18 +108,6 @@
     Ntilde_denominator<-omegaj*sum((num)^(l))
     phi.de.t<-omegaj*sum((num)^(l))
 
-
-    #for(j in 1:J){
-      #XrjWrXrj<-t(Xr[,j])%*%Wr%*%Xr[,j]
-      #XrjWrXrj<-as.numeric(solve(XrjWrXrj))
-      #Nj<-XrjWrXrj*tcrossprod(CrWrXr)
-    #  Nj<-XrWrXr[j]*tcrossprod(CrWrXr[,j])
-    #  num<-t(tcur)%*%Nj%*%tcur
-    #  Ntilde_numerator<-Ntilde_numerator+as.numeric(omegaj*(num)^(l-1))*Nj
-    #  Ntilde_denominator<-Ntilde_denominator+omegaj*(num)^(l)
-    #  phi.de.t<-phi.de.t+omegaj*(num)^(l)
-    #  }
-
     Ntilde<-Ntilde_numerator*as.numeric(1/Ntilde_denominator)
     chir<-myxichi$chi[r]
     Ntilde_p3<-chir*(Ntilde)
@@ -119,8 +118,8 @@
     mycrit<-Psi.de.tdq+Psi.de.tdp+phi.de.t
     CritNablagamma<-deltaPsi_p1+deltaPsi_p2+deltaPhi_p3
 
-    ## ICI LE Gr à modifier avec lambda
-    Gr<-THEME:::.fun.StructRel(Cr,Wr,lambda=0.5)$G
+    ## ICI LE Gr à modifier avec lambda : Q Xavier lambda de la fun StructRel correspond à s ?
+    Gr<-THEME:::.fun.StructRel(Cr,Wr,lambda=s)$G #avant lambda fix à .5
     CrWcr<-crossprod(Cr,Wr)%*%Cr
     Grinv<-solve(Gr)
 

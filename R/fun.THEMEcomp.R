@@ -25,7 +25,7 @@
 
 #' @keywords THEME
 
-THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bwopondChoice=NA,updateProgress = NULL,myEps=10^(-6)){
+THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bwopondChoice=NA,updateProgress = NULL,myEps=10^(-6),optparallel=FALSE){
 
   param_yaml<-THEME:::.fun_Buildfolders(opt.build=FALSE)
 
@@ -46,7 +46,7 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
   EY[t(E)=="Z"]<-0
   E<-cbind(t(EY),t(EX))
   P<-as.matrix(1/nrow(Xlist[[1]])*diag(1,nrow(Xlist[[1]])))
-  W<-P
+  W<-P #as(P, 'dgeMatrix')
   Xtotorig<-Xlist
   THEME:::.sav.Xorig(Xtotorig,OutputDir=OutputDir)
   if(is.null(Xnew)){Xnew<-Xlist}
@@ -62,11 +62,14 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
   Mlist<-res$Mlist
 
   THEME:::.sav.Data(Xtot,Mlist,P,OutputDir=OutputDir)
-  THEME:::.fun.writeorreadyaml(dbY=Xtot[[resE$rEq[[length(resE$rEq)]][1]]])
+  #THEME:::.fun.writeorreadyaml(dbY=Xtot[[resE$rEq[[length(resE$rEq)]][1]]])
 
   if(is.null(updateProgress)){cat("THEME running... ")}
-  #
+
+  print(system.time({
   resTHEME<-THEME:::.fun.THEMEint(Xtot,Ctot=Clist,E,resE,W,s=s,l=l,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,myEps=myEps,OutputDir=OutputDir)
+  }))
+
   if(is.null(updateProgress)){cat(" completed")}
   Ftot<-resTHEME$Ftot
   Ttot<-resTHEME$Ttot
@@ -88,10 +91,11 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
     text <- paste0("Model ", paste(nbcomp,collapse=" "))
     if (is.function(updateProgress)){updateProgress(detail = text)}
 
-    updateProgress2 <- function(value = NULL, detail = NULL) {
+    updateProgress2 <- function(value = NULL, detail = NULL,nmax=0) {
       if (is.null(value)) {
-        value <- progress2$getValue()
-        value <- value + (progress2$getMax() - value) / 3
+        value <- progress2$getValue()#
+
+        if(nmax==0){value <- value + (progress2$getMax() - value) / 3}else{value <- value + progress2$getMax()/nmax}
         }
       progress2$set(value = value, detail = detail)
       }
@@ -101,9 +105,51 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
     on.exit(progress2$close())
     if(is.null(updateProgress)){cat("THEME CrossValidation ", text,"... ")}
 
-    rescv<-THEME:::.THEME.CrossVal(Xtotorig,E,resE,nbtest=cvvChoice,optordersample=NULL,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,exps=s,expl=l,updateProgress=updateProgress2,myEps=myEps,OutputDir=OutputDir)
-    THEME:::.sav.THEMECrossVal(rescv,OutputDir=OutputDir)
-    ordersamplecv<-rescv$ordersample
+    ##### NEW CROSSVAL for Parallel 2020 JULY
+    ## blocks for Crossval
+    #browser()
+    nind<-nrow(Xtot[[1]])
+    nbtest<-cvvChoice
+    config_crossval<-fun.blockcrossval(nbtest,nind,optordersample=NULL)
+    listsamples<-config_crossval$listsamples
+    nbsteps<-config_crossval$nbsteps
+    ordersamplecv<-config_crossval$ordersample
+
+    ## Crossval
+
+    if(optparallel==FALSE){
+      res<-foreach(i=1:nbsteps)%do%{
+        text <- paste0("CV ", i,"/",nbsteps)
+        updateProgress2(detail = text,nmax=nbsteps)
+        rescv<-fun.crossvalonestep(i,nbsteps=nbsteps,listsamples=listsamples,Xtot=Xtotorig,resE=resE,E=E,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,myEps=myEps,s=s,l=l,LogfileCV=NULL)
+        }
+      }
+
+    ## Crossval parallel
+    if(optparallel==TRUE){
+      library(doParallel)
+      library(parallel)
+      cl <- makeCluster(detectCores() - 1)
+      registerDoParallel(cl)
+      text <- paste0("Parallel Analysis \n ProgressBar inactive")
+      updateProgress2(detail = text,nmax=nbsteps)
+      res<-foreach(i=1:nbsteps,.packages='THEME')%dopar%{
+          fun.crossvalonestep(i,nbsteps=nbsteps,listsamples=listsamples,Xtot=Xtotorig,resE=resE,E=E,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,myEps=myEps,s=s,l=l,LogfileCV=NULL)
+          }
+      stopCluster(cl)
+    }
+
+    ## Agregate Crossval results
+    Ypredtot<-lapply(1:nbeq,function(j)do.call(rbind,lapply(1:nbsteps,function(k)res[[k]]$Ypredtot[[j]])))
+    errorq<-lapply(1:nbeq,function(j)apply(do.call(rbind,lapply(1:nbsteps,function(k)res[[k]]$errorq[[j]])),2,mean))
+    R2CV<-lapply(1:nbeq,function(j)apply(do.call(rbind,lapply(1:nbsteps,function(k)res[[k]]$R2CV[[j]])),2,mean))
+    Ymean<-lapply(1:nbeq,function(j)apply(abs(Xtotorig[resE$rEq[[j]][1]][[1]]),2,mean))
+    error_relative<-lapply(1:nbeq,function(j)errorq[[j]]/Ymean[[j]])
+
+    #save Crossval results
+    THEME:::.sav.THEMECrossVal(resE=resE,resCV=error_relative,Ypredtot=Ypredtot,R2CV=R2CV,OutputDir=OutputDir)
+    ## END CROSSVAL for Parallel 2020 JULY
+
 
     progress2$close()
     if(is.null(updateProgress)){cat(" completed\n")}
@@ -139,10 +185,10 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
         }
 
       resEopti<-THEME:::.fun.rvect(Eopti,nbcomp=nbcompopti)
-      updateProgress2 <- function(value = NULL, detail = NULL) {
+      updateProgress2 <- function(value = NULL, detail = NULL,nmax=0) {
         if (is.null(value)) {
           value <- progress2$getValue()
-          value <- value + (progress2$getMax() - value) / 5
+          if(nmax==0){value <- value + (progress2$getMax() - value) / 3}else{value <- value + progress2$getMax()/nmax}
         }
         progress2$set(value = value, detail = detail)
       }
@@ -151,14 +197,57 @@ THEME<-function(Xlist,Xnew=NULL,E,nbcomp,s=.5,l=1,OutputDir=NULL,cvvChoice=NA,bw
       progress2$set(message = "CV running", value = 0)
       on.exit(progress2$close())
 
-      rescv<-THEME:::.THEME.CrossVal(Xtotorig,Eopti,resEopti,nbtest=cvvChoice,optordersample=ordersamplecv,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,exps=s,expl=l,updateProgress=updateProgress2,myEps=myEps,OutputDir=OutputDir)
+
+
+      ## blocks for Crossval
+      nind<-nrow(Xtot[[1]])
+      nbtest<-cvvChoice
+      config_crossval<-fun.blockcrossval(nbtest,nind,optordersample=ordersamplecv)
+      listsamples<-config_crossval$listsamples
+      nbsteps<-config_crossval$nbsteps
+
+      ## Crossval
+      if(optparallel==FALSE){
+        res<-foreach(i=1:nbsteps)%do%{
+          text <- paste0("CV ", i,"/",nbsteps)
+          updateProgress2(detail = text,nmax=nbsteps)
+          rescv<-fun.crossvalonestep(i,nbsteps=nbsteps,listsamples=listsamples,Xtot=Xtotorig,resE=resEopti,E=Eopti,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,myEps=myEps,s=s,l=l,LogfileCV=NULL)
+        }
+      }
+
+      ## Crossval parallel
+      if(optparallel==TRUE){
+        library(doParallel)
+        library(parallel)
+        cl <- makeCluster(detectCores() - 1)
+        registerDoParallel(cl)
+        text <- paste0("Parallel Analysis \n ProgressBar inactive")
+        updateProgress2(detail = text,nmax=nbsteps)
+        res<-foreach(i=1:nbsteps,.packages='THEME')%dopar%{
+          rescv<-fun.crossvalonestep(i,nbsteps=nbsteps,listsamples=listsamples,Xtot=Xtotorig,resE=resEopti,E=Eopti,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,myEps=myEps,s=s,l=l,LogfileCV=NULL)
+          }
+        stopCluster(cl)
+      }
+
+      ## Agregate Crossval results
+      Ypredtot<-lapply(1:nbeq,function(j)do.call(rbind,lapply(1:nbsteps,function(k)res[[k]]$Ypredtot[[j]])))
+      errorq<-lapply(1:nbeq,function(j)apply(do.call(rbind,lapply(1:nbsteps,function(k)res[[k]]$errorq[[j]])),2,mean))
+      R2CV<-lapply(1:nbeq,function(j)apply(do.call(rbind,lapply(1:nbsteps,function(k)res[[k]]$R2CV[[j]])),2,mean))
+      Ymean<-lapply(1:nbeq,function(j)apply(abs(Xtotorig[resEopti$rEq[[j]][1]][[1]]),2,mean))
+      error_relative<-lapply(1:nbeq,function(j)errorq[[j]]/Ymean[[j]])
+
+      #save Crossval results
+      THEME:::.sav.THEMECrossVal(resE=resEopti,resCV=error_relative,Ypredtot=Ypredtot,R2CV=R2CV,OutputDir=OutputDir)
+
+      #rescv<-THEME:::.THEME.CrossVal(Xtotorig,Eopti,resEopti,nbtest=cvvChoice,optordersample=ordersamplecv,optEquiPondTau=optEquiPondTau,optEquiPondVarPhi=optEquiPondVarPhi,exps=s,expl=l,updateProgress=updateProgress2,myEps=myEps,OutputDir=OutputDir)
       progress2$close()
 
-      THEME:::.sav.THEMECrossVal(rescv,OutputDir=OutputDir)
+      #THEME:::.sav.THEMECrossVal(rescv,OutputDir=OutputDir)
       namemod<-c(namemod,paste("M_",paste(nbcomp,collapse="_"),sep=""))
-      for(icv in 1:nbeq){
-        MatCV[[icv]]<-cbind(MatCV[[icv]],namemod=rescv$resCV[[icv]])
-        }
+      MatCV<-error_relative
+      #for(icv in 1:nbeq){
+      #  MatCV[[icv]]<-cbind(MatCV[[icv]],namemod=rescv$resCV[[icv]])
+      #  }
       res<-THEME:::.fun.XlisttoClist(Xtot,W,Eopti,Einfo=resEopti)
       Clist<-res$Clist
       Vlist<-res$Vlist
